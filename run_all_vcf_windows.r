@@ -18,7 +18,7 @@ nLoc(gls)
 nInd(gls)
 sfs <-gl.sfs(gls)
 
-#gls <- gls[,gls@chromosome==1]
+#gls <- gls[,gls@chromosome==2]
 
 L <- 5e8 #total length of chromosome (for sfs methods)
 mu <- 1e-8  #mutation rate
