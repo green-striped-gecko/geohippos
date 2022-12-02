@@ -100,15 +100,15 @@ dummy$method <- "snep"
 ress[[4]]<- dummy
 
 
-dummy <-data.frame(nr =1:7)
+dummy <-data.frame(nr =1:6)
 
-#dummy$year <- c(0,20,20,50,50,300)
-#dummy$Ne <- c(200,200,30,30,500,500)
+dummy$year <- c(0,20,20,50,50,300)
+dummy$Ne <- c(200,200,5,5,200,200)
 ##dummy$year <- c(0,25,25,500)
 #dummy$Ne <- c(200,200,100,100)
 #fox
-dummy$year <- c(0,10,30,30,50,50,500)
-dummy$Ne <- c(600,600,600,200,200,10000,10000)
+#dummy$year <- c(0,10,30,30,50,50,500)
+#dummy$Ne <- c(600,600,600,200,200,10000,10000)
 
 
 dummy$method="sim"
@@ -117,7 +117,7 @@ res <- do.call(rbind, ress)
 library(ggplot2)
 
 
-ggplot(res, aes(x=year, y=Ne, color=method))+geom_line()+facet_wrap(. ~  method)
+ggplot(res, aes(x=year, y=Ne, color=method))+geom_line()+facet_wrap(. ~  method, scales = "free")
 ggplot(res, aes(x=year, y=Ne, color=method, group=method))+geom_line()#+xlim(c(0,500))+ylim(c(0,1000))
 
 
