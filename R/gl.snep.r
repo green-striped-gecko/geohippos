@@ -30,7 +30,10 @@ gl.snep <- function(x, outfile="dummy",snep.path, n.cores=1, args="") {
   op <- getwd()
   setwd(snep.path)
   snpcmd <- progs
-  if (os=="Linux") snpcmd <- paste0("./",snpcmd)
+  if (os=="Linux") {
+    snpcmd <- paste0("./",snpcmd)
+    system(paste0("chmod 555 ",progs))
+  }
   system(paste0(snpcmd," -ped ",outfile,".ped -t ", n.cores," ", args))
   
   res <- read.csv(paste0(outfile,".NeAll"), sep="\t", header=T)
