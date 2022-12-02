@@ -7,7 +7,7 @@ library(furrr) #needed for stairways
 library(tictoc)
 tic()
 gls <- geohippos::gl.read.vcf("./inst/extdata/slim_5c_100.vcf", verbose=0)
-#gls <- geohippos::gl.read.vcf("./inst/extdata/slim_200-5-50y-200-30y.vcf")
+gls <- geohippos::gl.read.vcf("./inst/extdata/slim_200-5-50y-200-30y.vcf")
 #split chromosomes...
 
 gls$chromosome <- factor(ceiling(gls$position/1e8)) #slim simulation
@@ -26,14 +26,14 @@ mu <- 1e-8  #mutation rate
 # Neestimator #
 ###############
 system.time(
-  Ne_ldnest <- gl.LDNe(gls,neest.path = "./binaries/NEestimator/", singleton.rm = F, critical = c(0))
+  Ne_ldnest <- gl.LDNe(gls,neest.path = "./binaries/NEestimator/windows/", singleton.rm = F, critical = c(0))
 )
 
 ###############
 #     Epos    #
 ###############
 system.time(
-  Ne_epos <- gl.epos(gls, epos.path = "./binaries/epos/linux/", l = L, u=mu, boot=50)
+  Ne_epos <- gl.epos(gls, epos.path = "./binaries/epos/windows/", l = L, u=mu, boot=50)
 )
 #plot(Median ~ (X.Time), data=Ne_epos, type="l", lwd=2)
 #points(LowerQ ~ (X.Time), data=Ne_epos, type="l", col="blue", lty=2)
@@ -57,7 +57,7 @@ system.time(
 #     GONE    #
 ###############
 system.time(
-  Ne_gone <- gl.gone(gls,gone.path = "./binaries/gone/linux/") #runs parallel via InputParamters
+  Ne_gone <- gl.gone(gls,gone.path = "./binaries/gone/windows/") #runs parallel via InputParamters
 )
 #plot(Ne_gone$Generation, Ne_gone$Geometric_mean, type="l")
 
@@ -66,7 +66,7 @@ system.time(
 #   SNEP      #
 ###############
 system.time(
-  Ne_snep <- gl.snep(gls, snep.path = "./binaries/snep/linux", n.cores=30)
+  Ne_snep <- gl.snep(gls, snep.path = "./binaries/snep/windows", n.cores=30)
 )
 #plot(Ne ~ GenAgo, data=Ne_snep, type="l")
 
