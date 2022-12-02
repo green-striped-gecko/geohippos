@@ -2,6 +2,8 @@
 
 library(dartR)
 library(geohippos)
+library(tictoc)
+tic()
 gls <- geohippos::gl.read.vcf("./inst/extdata/slim_5c_100.vcf", verbose=0)
 gls <- geohippos::gl.read.vcf("./inst/extdata/slim_200-5-50y-200-30y.vcf")
 #split chromosomes...
@@ -117,7 +119,7 @@ ggplot(res, aes(x=year, y=Ne, color=method))+geom_line()+facet_wrap(. ~  method)
 ggplot(res, aes(x=year, y=Ne, color=method, group=method))+geom_line()#+xlim(c(0,500))+ylim(c(0,1000))
 
 
-
+toc()
 
 
 
