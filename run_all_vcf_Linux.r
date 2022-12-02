@@ -7,7 +7,7 @@ library(furrr) #needed for stairways
 library(tictoc)
 tic()
 gls <- geohippos::gl.read.vcf("./inst/extdata/slim_5c_100.vcf", verbose=0)
-#gls <- geohippos::gl.read.vcf("./inst/extdata/slim_200-5-50y-200-30y.vcf")
+gls <- geohippos::gl.read.vcf("./inst/extdata/slim_200-5-50y-200-30y.vcf")
 #split chromosomes...
 
 gls$chromosome <- factor(ceiling(gls$position/1e8)) #slim simulation
@@ -26,7 +26,7 @@ mu <- 1e-8  #mutation rate
 # Neestimator #
 ###############
 system.time(
-  Ne_ldnest <- gl.LDNe(gls,neest.path = "./binaries/NEestimator/", singleton.rm = F, critical = c(0))
+  Ne_ldnest <- gl.LDNe(gls,neest.path = "./binaries/NEestimator/linux", singleton.rm = F, critical = c(0))
 )
 
 ###############
