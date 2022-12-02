@@ -26,7 +26,7 @@ mu <- 1e-8  #mutation rate
 # Neestimator #
 ###############
 system.time(
-  Ne_ldnest <- gl.LDNe(gls,neest.path = "./binaries/NEestimator/", singleton.rm = F, critical = c(0))
+  Ne_ldnest <- gl.LDNe(gls,neest.path = "./binaries/NEestimator/linux", singleton.rm = F, critical = c(0))
 )
 
 ###############
