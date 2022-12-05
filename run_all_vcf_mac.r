@@ -1,6 +1,7 @@
 
 
 library(dartR)
+install_github("https://github.com/green-striped-gecko/geohippos")
 library(geohippos)
 library(parallel) #needed for stairways
 library(furrr) #needed for stairways
