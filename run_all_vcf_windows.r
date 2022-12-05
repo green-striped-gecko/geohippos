@@ -1,13 +1,16 @@
 
 
 library(dartR)
+library(devtools)
+install_github("https://github.com/green-striped-gecko/geohippos")
 library(geohippos)
 library(parallel) #needed for stairways
 library(furrr) #needed for stairways
 library(tictoc)
 tic()
 gls <- geohippos::gl.read.vcf("./inst/extdata/slim_5c_100.vcf", verbose=0)
-gls <- geohippos::gl.read.vcf("./inst/extdata/slim_200-5-50y-200-30y.vcf")
+gls <- geohippos::gl.read.vcf("./vcf/slim_200-50-100y.vcf")
+
 #split chromosomes...
 
 gls$chromosome <- factor(ceiling(gls$position/1e8)) #slim simulation
@@ -34,6 +37,7 @@ system.time(
 ###############
 system.time(
   Ne_epos <- gl.epos(gls, epos.path = "./binaries/epos/windows/", l = L, u=mu, boot=50)
+  
 )
 #plot(Median ~ (X.Time), data=Ne_epos, type="l", lwd=2)
 #points(LowerQ ~ (X.Time), data=Ne_epos, type="l", col="blue", lty=2)
@@ -100,10 +104,10 @@ dummy$method <- "snep"
 ress[[4]]<- dummy
 
 
-dummy <-data.frame(nr =1:6)
+dummy <-data.frame(nr =1:4)
 
-dummy$year <- c(0,20,20,50,50,300)
-dummy$Ne <- c(200,200,5,5,200,200)
+dummy$year <- c(2,100,100,500)
+dummy$Ne <- c(50,50,200,200)
 ##dummy$year <- c(0,25,25,500)
 #dummy$Ne <- c(200,200,100,100)
 #fox
@@ -118,7 +122,7 @@ library(ggplot2)
 
 
 ggplot(res, aes(x=year, y=Ne, color=method))+geom_line()+facet_wrap(. ~  method, scales = "free")
-ggplot(res, aes(x=year, y=Ne, color=method, group=method))+geom_line()#+xlim(c(0,500))+ylim(c(0,1000))
+ggplot(res, aes(x=year, y=Ne, color=method, group=method))+geom_line()+xlim(c(2,500))+ylim(c(0,1000))
 
 
 toc()
