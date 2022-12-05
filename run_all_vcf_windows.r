@@ -7,8 +7,11 @@ library(geohippos)
 library(parallel) #needed for stairways
 library(furrr) #needed for stairways
 library(tictoc)
+
+
+
 tic()
-gls <- geohippos::gl.read.vcf("./inst/extdata/slim_5c_100.vcf", verbose=0)
+#gls <- geohippos::gl.read.vcf("./inst/extdata/slim_5c_100.vcf", verbose=0)
 gls <- geohippos::gl.read.vcf("./vcf/slim_200-50-100y.vcf")
 
 #split chromosomes...
