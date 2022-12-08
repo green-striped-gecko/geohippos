@@ -2,7 +2,7 @@
 
 library(dartR)
 library(devtools)
-install_github("https://github.com/green-striped-gecko/geohippos")
+#install_github("https://github.com/green-striped-gecko/geohippos")
 library(geohippos)
 library(parallel) #needed for stairways
 library(furrr) #needed for stairways
@@ -13,7 +13,7 @@ library(tictoc)
 tic()
 #gls <- geohippos::gl.read.vcf("./inst/extdata/slim_5c_100.vcf", verbose=0)
 gls <- geohippos::gl.read.vcf("./vcf/slim_200-50-100y.vcf")
-
+gls <- geohippos::gl.read.vcf("d:/downloads/slim_50_100inlast10.vcf")
 #split chromosomes...
 
 gls$chromosome <- factor(ceiling(gls$position/1e8)) #slim simulation
@@ -22,9 +22,21 @@ table(gls@chromosome)
 #some checks on the input file
 nLoc(gls)
 nInd(gls)
+pop(gls)<- rep("A", nInd(gls))
 sfs <-gl.sfs(gls)
 
-#gls <- gls[,gls@chromosome==2]
+
+#gls <- gls[,gls@chromosome==1 | gls@chromosome==4]
+gls <- gls[,gls@chromosome==1]
+#gl.
+gl2genepop(gls, outfile="gtest.gen", outpath = "d:/downloads/LinkNe-master/", output_format = "3_digits")
+gl2plink(gls, outfile = "gtest", outpath = "d:/downloads/LinkNe-master/")
+mm <- read.csv("d:/downloads/LinkNe-master/gtest.map", sep=" ", header=F)
+ff <- data.frame(locus=mm[,2], chromosome=mm[,1], position=((mm[,4]-2e8)/1005034))
+write.table(ff, "d:/downloads/LinkNe-master/gtest.map2", row.names = FALSE, quote = F, sep="\t")
+
+
+
 
 L <- 5e8 #total length of chromosome (for sfs methods)
 mu <- 1e-8  #mutation rate
@@ -77,6 +89,15 @@ system.time(
 )
 #plot(Ne ~ GenAgo, data=Ne_snep, type="l")
 
+
+
+###############
+#   LinkNe    #
+###############
+system.time(
+Ne_LinkNe <- gl.LinkNe(gls, outfile = "trun", LinkNe.path = "./binaries/linkne/windows", perl = FALSE, other.args = "-t")
+)
+#plot(1/(2*Ne_LinkNe$MEAN_C), Ne_LinkNe$NE, type="l")
 
 ress <- list()
 
