@@ -99,15 +99,15 @@ gl.epos <- function(x,epos.path, sfs=NULL, minbinsize=1,folded=TRUE, l=NULL,
   setwd(tempdir())
 
   if (boot>0) {
-    if (os=="Linux") system("chmod 555 bootSfs")
+    if (os=="Linux") system("chmod 777 bootSfs")
     bsdummy <- system(bootcmd, intern = TRUE)
     writeLines(bsdummy,file.path(tempdir(),"bs.sfs"))
   }
-  if (os=="Linux") system("chmod 555 epos")
+  if (os=="Linux") system("chmod 777 epos")
   epdummy <- system(eposcmd, inter=T)
   writeLines(epdummy,file.path(tempdir(),"ep.dat"))
   eposplotcmd <-"epos2plot ep.dat"
-  if (os=="Linux") system("chmod 555 epos2plot")
+  if (os=="Linux") system("chmod 777 epos2plot")
   if (os!="Windows") eposplotcmd <- paste0("./", eposplotcmd)
   eposout <- system(eposplotcmd, intern = TRUE)
   setwd(old.path)
