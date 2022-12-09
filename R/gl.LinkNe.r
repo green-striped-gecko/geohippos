@@ -3,6 +3,7 @@
 #' This is an implementation/wrapper to run LinkNe \link[Hollenbeck et al. 2016]{http://www.nature.com/hdy/journal/v117/n4/abs/hdy201630a.html}.
 #' @param x genlight/dartR object 
 #' @param outfile name of the output file
+#' @param L length of a single chromosome (used to create the map file)
 #' @param LinkNe.path path to LinkNe (could be a binary (e.g. LinkNe.exe) or the perl version (LinkNe.pl))
 #' @param perl switch to run the perl version instead of the binary. To run the perl version your system must have perl installed and accessible from any folder (e.g. in the path under windows)
 #' @param other.args additional arguments passed to LinkNe (\link[LinkNe settings]{https://github.com/chollenbeck/LinkNe} )
@@ -11,7 +12,7 @@
 #' @author Custodian: Bernd Gruber
 
 
-gl.LinkNe <- function(x, outfile="LinkNe", LinkNe.path=NULL,  perl=FALSE, temp.path=tempdir(), other.args="", verbose=1)
+gl.LinkNe <- function(x, outfile="LinkNe", L=1e8, LinkNe.path,  perl=FALSE, temp.path=tempdir(), other.args="", verbose=1)
 {
   # CHECK DATATYPE
   datatype <- utils.check.datatype(x, verbose = verbose)
@@ -36,7 +37,7 @@ gl.LinkNe <- function(x, outfile="LinkNe", LinkNe.path=NULL,  perl=FALSE, temp.p
     if (os=="Linux" | os=="Darwin") system(paste("chmod 777 ", file.path(LinkNe.path, progs)))
   } else{
     cat(
-      error(
+      cat(
         "  Cannot find",
         progs[!fex],
         "in the specified folder given by LinkNe.path:",
@@ -53,8 +54,8 @@ fn="dummy"
 gl2genepop(x, outfile=paste0(fn,".gen"), outpath = temp.path, output_format = "3_digits", verbose = verbose)
 gl2plink(x, outfile = fn, outpath = temp.path, verbose = verbose)
 mm <- read.csv(file.path(temp.path,paste0(fn,".map")), sep=" ", header=F)
-ff <- data.frame(locus=mm[,2], chromosome=mm[,1], position=((mm[,4]-(as.numeric(x@chromosome)-1)*1e8)/1005034))
-write.table(ff, file.path(temp.path,paste0(fn,".map2")), row.names = FALSE, quote = F, sep="\t")
+ff <- data.frame(locus=mm[,2], chromosome=mm[,1], position=((mm[,4]-(as.numeric(x@chromosome)-1)*L)/1005034))
+write.table(ff, file.path(temp.path,paste0(fn,".map2")), row.names = FALSE, quote = F, sep="\t",eol="\r\n")
 if (perl) progs <- "perl LinkNe.pl"
 if (os!="Windows") progs <- paste0("./",progs)
 system(paste0(progs," -i ",fn,".gen -map ", fn,".map2 -o ",outfile," ",other.args))
