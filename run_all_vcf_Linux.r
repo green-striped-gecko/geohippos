@@ -1,6 +1,7 @@
 
 
 library(dartR)
+install_github("https://github.com/green-striped-gecko/geohippos")
 library(geohippos)
 library(parallel) #needed for stairways
 library(furrr) #needed for stairways
@@ -19,6 +20,11 @@ nInd(gls)
 sfs <-gl.sfs(gls)
 
 #gls <- gls[,gls@chromosome==3]
+
+
+
+
+
 
 L <- 5e8 #total length of chromosome (for sfs methods)
 mu <- 1e-8  #mutation rate
@@ -70,6 +76,14 @@ system.time(
 )
 #plot(Ne ~ GenAgo, data=Ne_snep, type="l")
 
+
+###############
+#   LinkNe    #
+###############
+system.time(
+  Ne_LinkNe <- gl.LinkNe(gls, outfile = "trun", LinkNe.path = "./binaries/linkne/linux", perl = FALSE, other.args = "-t")
+)
+#plot(1/(2*Ne_LinkNe$MEAN_C), Ne_LinkNe$NE, type="l")
 
 ress <- list()
 
