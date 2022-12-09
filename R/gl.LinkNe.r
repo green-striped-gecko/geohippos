@@ -24,8 +24,6 @@ gl.LinkNe <- function(x, outfile="LinkNe", L=1e8, LinkNe.path,  perl=FALSE, temp
   }
   # check OS
   os <- Sys.info()['sysname'] 
-  #if (os=="Linux" | os=="Darwin" )  os=="Windows"
-  # check if epos epos2plot and [bootSfs are there]
   progs <- c("LinkNe")
   if (os=="Windows") progs <- paste0(progs,".exe") 
   if (perl) progs <- "LinkNe.pl" 
@@ -34,7 +32,7 @@ gl.LinkNe <- function(x, outfile="LinkNe", L=1e8, LinkNe.path,  perl=FALSE, temp
     file.copy(file.path(LinkNe.path, progs),
               to = temp.path,
               overwrite = TRUE)
-    if (os=="Linux" | os=="Darwin") system(paste("chmod 777 ", file.path(LinkNe.path, progs)))
+    if (os=="Linux" | os=="Darwin") system(paste("chmod 777 ", file.path(temp.path, progs)))
   } else{
     cat(
       cat(
