@@ -1,0 +1,33 @@
+initialize()   {
+               defineConstant("alpha2", 1e-8);
+               defineConstant("L", 5e8);
+               //defineConstant("simlen", 5000);
+               //how many outputs (simlen=only once at the end)
+               initializeSLiMOptions(nucleotideBased=T);
+               initializeAncestralNucleotides(randomNucleotides(L));
+               initializeMutationTypeNuc("m1", 0.5, "f",0.0 );
+               m1.mutationStackPolicy = "l";
+               m1.convertToSubstitution=T;
+               defineConstant("mm2", matrix(c(0.0,alpha2,0.0,0.0, alpha2,0.0,0.0,0.0, 0.0,0.0,0.0,alpha2, 0.0,0.0,alpha2,0.0 ),nrow=4, ncol=4));
+               //defineConstant("mm2", mmJukesCantor((1e-8)/3));
+
+               initializeGenomicElementType("g1", m1, 1.0, mm2);
+               initializeGenomicElement(g1, 0, L-1);
+               
+               //initializeRecombinationRate(rates = 1e-8);
+               initializeRecombinationRate(rates = c(1e-8,0.5,1e-8,0.5,1e-8,0.5,1e-8,0.5,1e-8), ends=c(1e8-1,1e8,2e8-1,2e8,3e8-1, 3e8,4e8-1, 4e8,5e8-1));     
+               
+             }
+1 early()   {
+               sim.addSubpop("p1",200);
+             }
+2000 late() {p1.setSubpopulationSize(50);}
+//2020 late() {p1.setSubpopulationSize(200);}
+//1120 late() {p1.setSubpopulationSize(600);}
+
+
+2100 late() {    
+    nn = "d:/downloads/slim_200-50-100y.vcf";
+    p1.outputVCFSample(sampleSize=0, replace=F,  outputMultiallelics=F,filePath=nn,  simplifyNucleotides=T);
+    sim.simulationFinished();
+  }
