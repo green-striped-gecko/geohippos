@@ -13,7 +13,7 @@ gls <- geohippos::gl.read.vcf("./inst/extdata/slim_200-5-50y-200-30y.vcf")
 
 gls$chromosome <- factor(ceiling(gls$position/1e8)) #slim simulation
 table(gls@chromosome)
-
+pop(gls)<- rep("A", nInd(gls))
 #some checks on the input file
 nLoc(gls)
 nInd(gls)
