@@ -33,8 +33,8 @@ gl.gone <- function(x,outfile="dummy" ,gone.path)  #need to be able to change pa
 op <- getwd()
 setwd(gone.path)
 if (os=="Linux") {
-  system("chmod 555 script_Gone.sh")
-  system("chmod 555 ./PROGRAMMES/*")
+  system("chmod 777 script_Gone.sh")
+  system("chmod 777 ./PROGRAMMES/*")
 }
 
 #TODO: create INPUT PARAMETER FILE
