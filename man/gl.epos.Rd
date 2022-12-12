@@ -62,7 +62,7 @@ returns a table of the Ne over time and a ggplot using estimate of times
 and Ne (see epos.doc)
 }
 \description{
-This is an implementation/wrapper to run epos \link{https://github.com/EvolBioInf/epos}. It relies on compiled version of epos, epos2plot and if a bootstrap output is required bootSfs. For more details on how to install these programs via \link{https://github.com/EvolBioInf/epos} and look out for the manual epos.pdf (in the doc folder of the repository \link{https://github.com/EvolBioInf/epos/blob/master/doc/epos.pdf}. The binaries need to be provided in a single folder. There are compiled versions available and also the necessary dlls for windows need to be provided (Under Linux/MacOS gls, blas need to be installed on your system)
+This is an implementation/wrapper to run epos \url{https://github.com/EvolBioInf/epos}. It relies on compiled version of epos, epos2plot and if a bootstrap output is required bootSfs. For more details on how to install these programs via \link{https://github.com/EvolBioInf/epos} and look out for the manual epos.pdf (in the doc folder of the repository \url{https://github.com/EvolBioInf/epos/blob/master/doc/epos.pdf}. The binaries need to be provided in a single folder. There are compiled versions available and also the necessary dlls for windows need to be provided (Under Linux/MacOS gls, blas need to be installed on your system)
 }
 \examples{
 require(dartR.data)
