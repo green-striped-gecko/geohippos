@@ -13,7 +13,7 @@ library(tictoc)
 tic()
 #gls <- geohippos::gl.read.vcf("./inst/extdata/slim_5c_100.vcf", verbose=0)
 gls <- geohippos::gl.read.vcf("./vcf/slim_200-50-100y.vcf")
-gls <- geohippos::gl.read.vcf("d:/downloads/slim_50_100inlast10.vcf")
+#gls <- geohippos::gl.read.vcf("d:/downloads/slim_50_100inlast10.vcf")
 #split chromosomes...
 
 gls$chromosome <- factor(ceiling(gls$position/1e8)) #slim simulation
