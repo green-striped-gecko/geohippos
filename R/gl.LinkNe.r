@@ -7,7 +7,7 @@
 #' @param LinkNe.path path to LinkNe (could be a binary (e.g. LinkNe.exe) or the perl version (LinkNe.pl))
 #' @param perl switch to run the perl version instead of the binary. To run the perl version your system must have perl installed and accessible from any folder (e.g. in the path under windows)
 #' @param other.args additional arguments passed to LinkNe (\link[LinkNe settings]{https://github.com/chollenbeck/LinkNe} )
-#' @verbose verbosity (though we cannot suppress console output during LinkNe runs)
+#' @param verbosity (though we cannot suppress console output during LinkNe runs)
 #' @export
 #' @author Custodian: Bernd Gruber
 
