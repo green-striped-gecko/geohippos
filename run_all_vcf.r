@@ -23,7 +23,7 @@ sfs <-gl.sfs(gls)
 
 
 #gls <- gls[,gls@chromosome==1 | gls@chromosome==4]
-#gls <- gls[,gls@chromosome==1]
+#gls <- gls[,gls@chromosome==4]
 
 
 #check os to find correct binaries
