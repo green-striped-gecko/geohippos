@@ -57,13 +57,13 @@ gl.epos <- function(x,epos.path, sfs=NULL, minbinsize=1,folded=TRUE, l=NULL,
   # all sanity checks (e.g. if folded length(sfs)=nInd etc.)
   
   # check OS
-  os <- Sys.info()['sysname'] 
+  os <- tolower(Sys.info()['sysname'] )
   #if (os=="Linux" | os=="Darwin" )  os=="Windows"
   # check if epos epos2plot and [bootSfs are there]
   progs <- c("epos", "epos2plot")
   if (boot>0) progs <- c(progs,"bootSfs")
-  if (os=="Windows") progs <- paste0(progs,".exe") 
-  if (os=="Windows") progs <- c(progs, "libblas.dll","libgsl.dll","libgslcblas.dll")
+  if (os=="windows") progs <- paste0(progs,".exe") 
+  if (os=="windows") progs <- c(progs, "libblas.dll","libgsl.dll","libgslcblas.dll")
   fex <- file.exists(file.path(epos.path, progs))
   if (all(fex)) {
     file.copy(file.path(epos.path, progs),
@@ -71,13 +71,12 @@ gl.epos <- function(x,epos.path, sfs=NULL, minbinsize=1,folded=TRUE, l=NULL,
               overwrite = TRUE)
   } else{
     cat(
-      error(
-        "  Cannot find",
+      "  Cannot find",
         progs[!fex],
-        "in the specified folder given by neest.path:",
-        neest.path,
+        "in the specified folder given by epos.path:",
+        epos.path,
         "\n"
-      )
+      
     )
     stop()
   }
@@ -88,27 +87,27 @@ gl.epos <- function(x,epos.path, sfs=NULL, minbinsize=1,folded=TRUE, l=NULL,
   bootcmd<-""
   
   if (boot>0) bootcmd <- paste("bootSfs -i",boot, "dummy.sfs ")
-  if (os!="Windows") bootcmd <- paste0("./", bootcmd)
+  if (os!="windows") bootcmd <- paste0("./", bootcmd)
   if (minbinsize==0) lcmd="" else lcmd=paste0(" -l ", l)
   ucmd <- paste0(" -u ",u)
   if (boot>0) sfsfile <-"bs.sfs" else sfsfile <- " dummy.sfs"
   eposcmd <- paste0("epos ",lcmd, ucmd,other.options, " ", sfsfile)
-  if (os!="Windows") eposcmd <- paste0("./", eposcmd)
+  if (os!="windows") eposcmd <- paste0("./", eposcmd)
   # DO THE JOB
   old.path <- getwd()
   setwd(tempdir())
 
   if (boot>0) {
-    if (os=="Linux") system("chmod 777 bootSfs")
+    if (os=="linux") system("chmod 777 bootSfs")
     bsdummy <- system(bootcmd, intern = TRUE)
     writeLines(bsdummy,file.path(tempdir(),"bs.sfs"))
   }
-  if (os=="Linux") system("chmod 777 epos")
+  if (os=="linux") system("chmod 777 epos")
   epdummy <- system(eposcmd, inter=T)
   writeLines(epdummy,file.path(tempdir(),"ep.dat"))
   eposplotcmd <-"epos2plot ep.dat"
-  if (os=="Linux") system("chmod 777 epos2plot")
-  if (os!="Windows") eposplotcmd <- paste0("./", eposplotcmd)
+  if (os=="linux") system("chmod 777 epos2plot")
+  if (os!="windows") eposplotcmd <- paste0("./", eposplotcmd)
   eposout <- system(eposplotcmd, intern = TRUE)
   setwd(old.path)
   ep2 <- (do.call(rbind,(strsplit(eposout,split = "\t"))))
