@@ -1,7 +1,7 @@
 Package: geohippos
 Type: Package
 Title: Genomic estimation of historic population sizes
-Version: 1.0
+Version: 1.1
 Date: 2022-12-02
 Depends: R (>= 3.5), dartR, parallel, furrr
 Author@R: c(
@@ -9,5 +9,5 @@ Author@R: c(
             role=c("aut","cre")))
 Description: This package supports running several software programs to estimate historic population sizes. Currently supported are epos, GONE, stairway2 and SNeP.
 License: GPL (>=3)
-RoxygenNote: 7.2.1
+RoxygenNote: 7.2.3
 Encoding: UTF-8
