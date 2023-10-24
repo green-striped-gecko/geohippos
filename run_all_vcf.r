@@ -43,8 +43,7 @@ mu <- 1e-8  #mutation rate
 #     Epos    #
 ###############
 system.time(
-  Ne_epos <- gl.epos(gls, epos.path = paste0("./binaries/epos/",os ), l = L, u=mu, boot=50, other.options = " -E 30", )
-  
+  Ne_epos <- gl.epos(gls, epos.path = paste0("./binaries/epos/",os ), l = L, u=mu, boot=10)
 )
 plot(Median ~ (X.Time), data=Ne_epos, type="l", lwd=2, ylim=c(0,200))
 points(LowerQ ~ (X.Time), data=Ne_epos, type="l", col="blue", lty=2)
@@ -77,7 +76,7 @@ system.time(
 #   SNEP      #
 ###############
 system.time(
-  Ne_snep <- gl.snep(gls, snep.path = paste0("./binaries/snep/",os), n.cores=30)
+  Ne_snep <- gl.snep(gls, snep.path = paste0("./binaries/snep/",os), n.cores=20)
 )
 #plot(Ne ~ GenAgo, data=Ne_snep, type="l")
 
