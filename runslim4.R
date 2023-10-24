@@ -1,6 +1,10 @@
 library(slimr)
+library(future)
 library(dartR.base)
 gl.set.verbosity(0)
+
+
+df <- data.frame(ss=seq(10,50,10))
 
 
 slim_script(
@@ -26,44 +30,46 @@ slim_script(
              }),
   slim_block(1,
              {
-               sim.addSubpop("p1", 200);
+               sim.addSubpop("p1", 100);
              }),
-  slim_block(1950,
+
+  
+  slim_block(1000,late(),
              {
-               p1.setSubpopulationSize(50);
+             #p1.setSubpopulationSize(200+(sim.cycle-2100));
+             p1.setSubpopulationSize(10);
              }),
-  slim_block(2000,
+
+  slim_block(1050,1100,late(),
              {
+               r = log(10)/50
+               p1.setSubpopulationSize(asInteger(10*exp(r*(sim.cycle-1050))));
+               #p1.setSubpopulationSize(200+(sim.cycle-2100));
                p1.setSubpopulationSize(100);
              }),
   
   
-  #  slim_block(2050,2100,late(),
-#             {
-#             p1.setSubpopulationSize(100+(sim.cycle-2050)*4);
-#             #  p1.setSubpopulationSize(200);
-#               
-#             }),
   
-  slim_block(2050,late(),
+    
+  slim_block(1100,late(),
              {
-               nn = "d:/downloads/slim_200-50-100y.vcf";
-               p1.outputVCFSample(sampleSize=100, replace=F,  outputMultiallelics=F,filePath=nn,  simplifyNucleotides=T);
+               nn = paste("d:/downloads/slim_100-10-100_bottle",slimr_template("ss"),".vcf");
+               p1.outputVCFSample(sampleSize=slimr_template("ss"), replace=F,  outputMultiallelics=F,filePath=nn,  simplifyNucleotides=T);
                sim.simulationFinished();
              })
 ) -> script_1
 
-script_1
+scripts <- slim_script_render(script_1, df)
 
 #run slim from within slimr
-
-slim_run(script_1)
+plan(multisession, workers=5)
+all <- slim_run(scripts,parallel = T)
 
 
 library(geohippos)
 #load back into R 
 
-gls <- geohippos::gl.read.vcf("d:/downloads/slim_200-50-100y.vcf", verbose=0)
+gls <- geohippos::gl.read.vcf("d:/downloads/slim_100-10-100_bottle 50 .vcf", verbose=0)
 
 #to split into chromosomes...
 gls$chromosome <- factor(ceiling(gls$position/1e8)) #slim simulation
@@ -84,7 +90,7 @@ mu <- 1e-8  #mutation rate
 #     Epos    #
 ###############
 system.time(
-  Ne_epos <- gl.epos(gls, epos.path = paste0("./binaries/epos/",os), l = L, u=mu, boot=5, minbinsize =2)
+  Ne_epos <- gl.epos(gls, epos.path = paste0("./binaries/epos/",os), l = L, u=mu, boot=10, minbinsize =2)
   
 )
 plot(Median ~ (X.Time), data=Ne_epos, type="l", lwd=2)
@@ -95,13 +101,13 @@ points(UpperQ ~ (X.Time), data=Ne_epos, type="l", col="orange", lty=2)
 #  STAIRWAYS  #
 ###############
 #system.time(
-#  Ne_sw <- gl.stairway2(gls,simfolder = "stairwaytest", verbose = T,stairway.path="./binaries/stairways/", mu = mu#, gentime = 1, run=TRUE, nreps = 30, parallel=5, L=L, minbinsize =1, cleanup = T)
+  Ne_sw <- gl.stairway2(gls,simfolder = "stairwaytest", verbose = T,stairway.path="./binaries/stairways/", mu = mu, gentime = 1, run=TRUE, nreps = 30, parallel=5, L=L, minbinsize =1, cleanup = T)
 #)
-#plot(Ne_sw$year, Ne_sw$Ne_median, type="l", lwd=2, xlab="year", ylab="Ne")
-#points(Ne_sw$year, Ne_sw$Ne_12.5., type="l", lty=2, col="blue")
-#points(Ne_sw$year, Ne_sw$Ne_87.5., type="l", lty=2, col="blue")
-#points(Ne_sw$year, Ne_sw$Ne_2.5., type="l", lty=2, col="red")
-#points(Ne_sw$year, Ne_sw$Ne_97.5., type="l", lty=2, col="red")
+plot(Ne_sw$year, Ne_sw$Ne_median, type="l", lwd=2, xlab="year", ylab="Ne")
+points(Ne_sw$year, Ne_sw$Ne_12.5., type="l", lty=2, col="blue")
+points(Ne_sw$year, Ne_sw$Ne_87.5., type="l", lty=2, col="blue")
+points(Ne_sw$year, Ne_sw$Ne_2.5., type="l", lty=2, col="red")
+points(Ne_sw$year, Ne_sw$Ne_97.5., type="l", lty=2, col="red")
 
 
 
