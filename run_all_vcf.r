@@ -8,8 +8,8 @@ library(geohippos)
 library(tictoc)
 tic()
 #gls <- geohippos::gl.read.vcf("./inst/extdata/slim_5c_100.vcf", verbose=0)
-gls <- geohippos::gl.read.vcf("./vcf/slim_200_20-50y_100-5y.vcf")
-#gls <- geohippos::gl.read.vcf("d:/downloads/slim_50_100inlast10.vcf")
+#gls <- geohippos::gl.read.vcf("./vcf/slim_200_20-50y_100-5y.vcf")
+gls <- geohippos::gl.read.vcf("d:/downloads/slimout_100-50.vcf")
 #split chromosomes...
 
 gls$chromosome <- factor(ceiling(gls$position/1e8)) #slim simulation
@@ -35,20 +35,19 @@ mu <- 1e-8  #mutation rate
 ###############
 # Neestimator #
 ###############
-system.time(
-  Ne_ldnest <- gl.LDNe(gls,neest.path = paste0("./binaries/NEestimator/",os), singleton.rm = F, critical = c(0))
-)
+#system.time(
+#  Ne_ldnest <- gl.LDNe(gls,neest.path = paste0("./binaries/NEestimator/",os), singleton.rm = F, #critical = c(0))
+#)
 
 ###############
 #     Epos    #
 ###############
 system.time(
-  Ne_epos <- gl.epos(gls, epos.path = paste0("./binaries/epos/",os), l = L, u=mu, boot=50)
-  
+  Ne_epos <- gl.epos(gls, epos.path = paste0("./binaries/epos/",os ), l = L, u=mu, boot=10)
 )
-#plot(Median ~ (X.Time), data=Ne_epos, type="l", lwd=2)
-#points(LowerQ ~ (X.Time), data=Ne_epos, type="l", col="blue", lty=2)
-#points(UpperQ ~ (X.Time), data=Ne_epos, type="l", col="orange", lty=2)
+plot(Median ~ (X.Time), data=Ne_epos, type="l", lwd=2, ylim=c(0,200))
+points(LowerQ ~ (X.Time), data=Ne_epos, type="l", col="blue", lty=2)
+points(UpperQ ~ (X.Time), data=Ne_epos, type="l", col="orange", lty=2)
 
 ###############
 #  STAIRWAYS  #
@@ -56,11 +55,11 @@ system.time(
 system.time(
   Ne_sw <- gl.stairway2(gls,simfolder = "stairwaytest", verbose = T,stairway.path="./binaries/stairways/", mu = mu, gentime = 1, run=TRUE, nreps = 30, parallel=5, L=L, minbinsize =1, cleanup = T)
 )
-#plot(Ne_sw$year, Ne_sw$Ne_median, type="l", lwd=2, xlab="year", ylab="Ne")
-#points(Ne_sw$year, Ne_sw$Ne_12.5., type="l", lty=2, col="blue")
-#points(Ne_sw$year, Ne_sw$Ne_87.5., type="l", lty=2, col="blue")
-#points(Ne_sw$year, Ne_sw$Ne_2.5., type="l", lty=2, col="red")
-#points(Ne_sw$year, Ne_sw$Ne_97.5., type="l", lty=2, col="red")
+plot(Ne_sw$year, Ne_sw$Ne_median, type="l", lwd=2, xlab="year", ylab="Ne")
+points(Ne_sw$year, Ne_sw$Ne_12.5., type="l", lty=2, col="blue")
+points(Ne_sw$year, Ne_sw$Ne_87.5., type="l", lty=2, col="blue")
+points(Ne_sw$year, Ne_sw$Ne_2.5., type="l", lty=2, col="red")
+points(Ne_sw$year, Ne_sw$Ne_97.5., type="l", lty=2, col="red")
 
 
 
@@ -77,7 +76,7 @@ system.time(
 #   SNEP      #
 ###############
 system.time(
-  Ne_snep <- gl.snep(gls, snep.path = paste0("./binaries/snep/",os), n.cores=30)
+  Ne_snep <- gl.snep(gls, snep.path = paste0("./binaries/snep/",os), n.cores=20)
 )
 #plot(Ne ~ GenAgo, data=Ne_snep, type="l")
 
