@@ -30,7 +30,7 @@ gl.read.vcf <- function(vcffile,
     
     pkg <- "vcfR"
       if (!(requireNamespace(pkg, quietly = TRUE))) {
-        cat(error(
+        cat(dartR::error(
           "Package",
           pkg,
           " needed for this function to work. Please install it.\n"

@@ -1,3 +1,4 @@
+####Run inference methods####
 
 
 library(dartR)
@@ -8,7 +9,7 @@ library(geohippos)
 library(tictoc)
 tic()
 #gls <- geohippos::gl.read.vcf("./inst/extdata/slim_5c_100.vcf", verbose=0)
-gls <- geohippos::gl.read.vcf("c:/temp/slim_rep_ 1 _pop_ 100 _tt_ 50 bottle 15 .vcf")
+gls <- geohippos::gl.read.vcf("C:/temp/slim_300_0.98_multitest_decline.vcf")
 #gls <- geohippos::gl.read.vcf("d:/downloads/slim_50_100inlast10.vcf")
 #split chromosomes...
 
@@ -42,11 +43,51 @@ system.time(
 ###############
 #     Epos    #
 ###############
-system.time(
-  Ne_epos <- gl.epos(gls, epos.path = paste0("./binaries/epos/",os), l = L, u=mu, boot=50)
+genome_len =  5e8
+mut_rate = 1e-8
+pop.init = c(200, 300, 400, 500)
+dec.rate = c(0.99, 0.98, 0.97)
+
+
+run_epos <- function(simset, nboots) {
+  ##create empty dataframe for results
+  epos_results <- as.list(simset);
+  i = 1
+  for (i in 1:length(simset)) {
+    
   
-)
-plot(Median ~ (X.Time), data=Ne_epos, type="l", lwd=2, xlim = c(0,400))
+    L <- genome_len; #total length of chromosome (for sfs methods)
+    mu <- mut_rate;  #mutation rate
+    gls <- geohippos::gl.read.vcf(simset[i,]$filename);
+    #split chromosomes...
+    
+    gls$chromosome <- factor(ceiling(gls$position/1e8)); #slim simulation
+    table(gls@chromosome);
+    #some checks on the input file
+    if (is.na(nLoc(gls))) {
+      print("Warning: nLoc = NA")
+    };
+    if (is.na(nInd(gls))) {
+      print("Warning: nInd = NA")
+    };
+    pop(gls)<- rep("A", nInd(gls))
+    #sfs <-gl.sfs(gls);
+    
+    #epos_results[i,]$sfs <- sfs;
+    epos_results[i,]$nboots <- nboots;
+    
+  system.time(
+    Ne_epos <- gl.epos(gls, epos.path = paste0("./binaries/epos/",os), l = L, u=mu, boot= nboots))
+    if (i == 1){
+      epos_results <- Ne_epos;
+      epos_results
+  };
+  return(epos_results)
+}
+
+test <- run_epos(simset, 10)
+
+plot(Median ~ (X.Time), data=Ne_epos, type="l", lwd=2, xlim = c(0,100))
 points(LowerQ ~ (X.Time), data=Ne_epos, type="l", col="blue", lty=2)
 points(UpperQ ~ (X.Time), data=Ne_epos, type="l", col="orange", lty=2)
 
@@ -87,67 +128,10 @@ plot(Ne ~ GenAgo, data=Ne_snep, type="l")
 #   LinkNe    #
 ###############
 system.time(
-Ne_LinkNe <- gl.LinkNe(gls, outfile = "trun", LinkNe.path = paste0("./binaries/linkne/",os), perl = FALSE)
+  Ne_LinkNe <- gl.LinkNe(gls, outfile = "trun", LinkNe.path = paste0("./binaries/linkne/",os), perl = FALSE)
 )
 plot(1/(2*Ne_LinkNe$MEAN_C), Ne_LinkNe$NE, type="l")
 
 ress <- list()
-
-
-dummy <-data.frame(nr =1:nrow(Ne_epos))
-dummy$year <- Ne_epos$X.Time
-dummy$Ne<- Ne_epos$Median
-dummy$method <- "epos"
-ress[[1]]<- dummy
-
-dummy <-data.frame(nr =1:nrow(Ne_sw))
-dummy$year <- Ne_sw$year
-dummy$Ne <- Ne_sw$Ne_median
-dummy$method <- "sw"
-ress[[2]]<- dummy
-
-
-dummy <-data.frame(nr =1:nrow(Ne_gone))
-dummy$year <- Ne_gone$Generation
-dummy$Ne <- Ne_gone$Geometric_mean
-dummy$method <- "gone"
-ress[[3]]<- dummy
-
-dummy <-data.frame(nr =1:nrow(Ne_snep))
-dummy$year <- Ne_snep$GenAgo
-dummy$Ne <- Ne_snep$Ne
-dummy$method <- "snep"
-ress[[4]]<- dummy
-
-
-dummy <-data.frame(nr =1:nrow(Ne_LinkNe))
-dummy$year <- 1/(2*Ne_LinkNe$MEAN_C)
-dummy$Ne <- Ne_LinkNe$NE
-dummy$method <- "LinkNe"
-ress[[5]]<- dummy
-
-##sim 
-dummy <-data.frame(nr =1:3)
-
-dummy$year <- c(0 , 50, 550)
-dummy$Ne <- c(302, 500 ,500)
-##dummy$year <- c(0,25,25,500)
-#dummy$Ne <- c(200,200,100,100)
-#fox
-#dummy$year <- c(0,10,30,30,50,50,500)
-#dummy$Ne <- c(600,600,600,200,200,10000,10000)
-
-
-dummy$method="sim"
-ress[[5]]<- dummy
-res <- do.call(rbind, ress)
-library(ggplot2)
-
-
-ggplot(res, aes(x=year, y=Ne, color=method))+geom_line()+facet_wrap(. ~  method, scales = "free")
-ggplot(res, aes(x=year, y=Ne, color=method, group=method))+geom_line()+xlim(c(2,500))+ylim(c(0,1000))
-
-
-toc()
 
 

@@ -14,10 +14,13 @@ gl.set.verbosity(0)
 ###define parameters########
 genome_len =  5e8
 mut_rate = 1e8
-pop.init = c(200, 300, 400, 500)
-dec.rate = c(0.99, 0.98, 0.97)
+pop.init = c(200)
+dec.rate = c(0.99)
+ss = c(10, 20, 50)
 
-simset <- expand.grid(genome_len = genome_len , mut_rate = mut_rate, pop.init = pop.init, dec.rate = dec.rate)
+simset <- expand.grid(genome_len = genome_len , mut_rate = mut_rate, pop.init = pop.init, dec.rate = dec.rate, ss = ss)
+
+simset
 
 slim_decline <- function(genome_len, mut_rate, pop.init, dec.rate) {
   
@@ -81,8 +84,11 @@ slim_script(
   
   slim_block(2050,late(),
              {
-               nn = paste0("c:/temp/slim_", slimr_template("pop.init", 200), "_", slimr_template("dec.rate", 0.99), "_multitest_decline.vcf");
-               slimr_output(p1.outputVCFSample(sampleSize=40, replace=F,  outputMultiallelics=F, filePath=nn,  simplifyNucleotides=T), name = "nn");
+               nn = paste0("c:/temp/slim_", slimr_template("pop.init", 200), "_", slimr_template("dec.rate", 0.99), "_", slimr_template("ss"), "_multitest_decline.vcf");
+               slimr_output(p1.outputVCFSample(sampleSize=slimr_template("ss"), replace=F,  outputMultiallelics=F, filePath=nn,  simplifyNucleotides=T), name = "nn");
                sim.simulationFinished();
              })
 ) -> decline_script
+
+
+
