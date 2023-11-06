@@ -19,8 +19,7 @@
 #' @param lower lower quantile of the bootstrap (only used if boot>0). default 0.025.
 #' (option -l in epos2plot)
 #' @param other.options additional options for epos (e.g -m, -x etc.)
-#' @param plot.out if set to true a timeseries plot of Ne (with bootstrap is
-#' calculated)
+#' @param cleanup if set to true intermediate tempfiles are deleted after the run
 #' @param verbose Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
 #' progress log ; 3, progress and results summary; 5, full report [default 2,
 #' unless specified using gl.set.verbosity].
@@ -38,7 +37,7 @@
 
 gl.epos <- function(x,epos.path, sfs=NULL, minbinsize=1,folded=TRUE, l=NULL, 
                     u=5e-9, boot=0, upper=0.975, lower=0.025, other.options="",
-                    plot.out=TRUE, verbose=NULL)
+                    cleanup=TRUE, verbose=NULL)
 {
   
   # SET VERBOSITY
@@ -58,6 +57,9 @@ gl.epos <- function(x,epos.path, sfs=NULL, minbinsize=1,folded=TRUE, l=NULL,
   
   # check OS
   os <- tolower(Sys.info()['sysname'] )
+  
+  tempd <-  tempfile(pattern = "dir")
+  dir.create(tempd, showWarnings = FALSE)
   #if (os=="Linux" | os=="Darwin" )  os=="Windows"
   # check if epos epos2plot and [bootSfs are there]
   progs <- c("epos", "epos2plot")
@@ -67,7 +69,7 @@ gl.epos <- function(x,epos.path, sfs=NULL, minbinsize=1,folded=TRUE, l=NULL,
   fex <- file.exists(file.path(epos.path, progs))
   if (all(fex)) {
     file.copy(file.path(epos.path, progs),
-              to = tempdir(),
+              to = tempd,
               overwrite = TRUE)
   } else{
     cat(
@@ -83,7 +85,7 @@ gl.epos <- function(x,epos.path, sfs=NULL, minbinsize=1,folded=TRUE, l=NULL,
 
   if (is.null(sfs)) sfs <- gl.sfs(x, minbinsize=minbinsize,folded=folded,singlepop = TRUE, plot.out = FALSE, verbose = 0 )
   df <- data.frame(r=1:length(sfs), fr=sfs)
-  write.table(df,file=file.path(tempdir(),"dummy.sfs"), row.names = F, sep="\t", col.names = TRUE, quote = FALSE)
+  write.table(df,file=file.path(tempd,"dummy.sfs"), row.names = F, sep="\t", col.names = TRUE, quote = FALSE)
   bootcmd<-""
   
   if (boot>0) bootcmd <- paste("bootSfs -i",boot, "dummy.sfs ")
@@ -95,16 +97,16 @@ gl.epos <- function(x,epos.path, sfs=NULL, minbinsize=1,folded=TRUE, l=NULL,
   if (os!="windows") eposcmd <- paste0("./", eposcmd)
   # DO THE JOB
   old.path <- getwd()
-  setwd(tempdir())
+  setwd(tempd)
 
   if (boot>0) {
     if (os=="linux") system("chmod 777 bootSfs")
     bsdummy <- system(bootcmd, intern = TRUE)
-    writeLines(bsdummy,file.path(tempdir(),"bs.sfs"))
+    writeLines(bsdummy,file.path(tempd,"bs.sfs"))
   }
   if (os=="linux") system("chmod 777 epos")
   epdummy <- system(eposcmd, inter=T)
-  writeLines(epdummy,file.path(tempdir(),"ep.dat"))
+  writeLines(epdummy,file.path(tempd,"ep.dat"))
   eposplotcmd <-"epos2plot ep.dat"
   if (os=="linux") system("chmod 777 epos2plot")
   if (os!="windows") eposplotcmd <- paste0("./", eposplotcmd)
@@ -114,9 +116,11 @@ gl.epos <- function(x,epos.path, sfs=NULL, minbinsize=1,folded=TRUE, l=NULL,
   epp <- data.frame(ep2[-1,])
   colnames(epp)<- ep2[1,]
   epp <- data.frame(apply(epp,2, as.numeric))
-  #if (verbose >= 1) {
-  #  cat(report("Completed:", funname, "\n"))
-  #}
+  
+  
+  if (cleanup) unlink(tempd, recursive = T)
+  
+  
   return(epp)
 }
   

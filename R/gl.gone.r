@@ -3,33 +3,30 @@
 #' @export 
 
 
-gl.gone <- function(x,outfile="dummy" ,gone.path)  #need to be able to change parameters....
+gl.gone <- function(x,outfile="dummy" ,gone.path, cleanup=TRUE)  #need to be able to change parameters....
 {
   # check OS
   os <- Sys.info()['sysname'] 
-  progs <- c("script_Gone.sh","PROGRAMMES","INPUT_PARAMETERS_FILE")
+  #create individual tempdir
+  tempd <-  tempfile(pattern = "dir")
+  dir.create(tempd, showWarnings = FALSE)
+  
+  progs <- c("script_Gone.sh","PROGRAMMES")
   fex <- file.exists(file.path(gone.path, progs))
   if (all(fex)) {
     file.copy(file.path(gone.path, progs),
-              to = tempdir(),
+              to = tempd,
               overwrite = TRUE, recursive = TRUE)
   } else{
-    cat(
-      error(
-        "  Cannot find",
+    cat("  Cannot find",
         progs[!fex],
         "in the specified folder given by gone.path:",
         gone.path,
-        "\n"
-      )
-    )
+        "\n")
     stop()
   }
-  gone.path <- tempdir()
-  
-  
-  
-  
+  gone.path <- tempd
+
 op <- getwd()
 setwd(gone.path)
 if (os=="Linux") {
@@ -41,11 +38,15 @@ if (os=="Linux") {
 gl2plink(x, outfile = outfile, outpath =gone.path, phen_value=-9, verbose=0)
 
 #SET PATH of INPUT PARAMETER FILE in script_GONE.sh
-system(paste0("script_Gone.sh ",outfile))
+system(paste0("./script_Gone.sh ",outfile))
 
+
+res<-  read.csv(paste0("Output_Ne_",outfile), sep="\t",skip = 1, header = T)
 setwd(op)
-res<-  read.csv(file.path(gone.path,paste0("Output_Ne_",outfile)), sep="\t",skip = 1, header = T)
+
+if (cleanup) unlink(tempd, recursive = T)
 return(res)
 }
   
+
   

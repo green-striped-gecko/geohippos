@@ -7,7 +7,7 @@ gl.stairway2 <-
   function(x, 
            outfile=NULL, 
            stairway.path,
-           simfolder=NULL,
+           name="sample",
            minbinsize=1,
            maxbinsize=NULL,
            pct_training=0.67,
@@ -33,28 +33,28 @@ gl.stairway2 <-
     
     funname <- match.call()[[1]]
     build <- "Juliette"
-    outfile <- paste0(simfolder,"blueprint")
-    outfilespec <- file.path(tempdir(), outfile)
+    tempd <-  tempfile(pattern = "dir")
+    dir.create(tempd, showWarnings = FALSE)
+    outfile <- paste0("blueprint")
+    outfilespec <- file.path(tempd, outfile)
     
     # check OS
     os <- tolower(Sys.info()['sysname']) 
+    #create individual tempdir
+   
     progs <- c("stairway_plot_es")
     fex <- file.exists(file.path(stairway.path, progs))
     if (all(fex)) {
       file.copy(file.path(stairway.path, progs),
-                to = tempdir(),
+                to = tempd,
                 overwrite = TRUE, recursive = TRUE)
-      stairway.path <- tempdir()
+      stairway.path <- tempd
     } else{
-      cat(
-        error(
-          "  Cannot find",
+      cat("  Cannot find",
           progs[!fex],
           "in the specified folder given by stairway.path:",
           stairway.path,
-          "\n"
-        )
-      )
+          "\n"      )
       stop()
     }
     
@@ -108,10 +108,10 @@ gl.stairway2 <-
       maxbinsize <- nInd(x)
       if(verbose >= 3){cat("  Max Bin Size not specified, set to",nInd(x),"\n")}
     }
-    if(is.null(nrand)){
-      nrand <- c(round((nInd(x)-1)/2), round(nInd(x)-1), round((nInd(x)-1)*3/2), round(2*(nInd(x)-1)))
-      if(verbose >= 3){cat("  No. of break points not specified, set to:",paste0(nrand, collapse=" "),"\n")}
-    }
+    if(is.null(nrand))  nrand <- c(round((nInd(x)-1)/2), round(nInd(x)-1), round((nInd(x)-1)*3/2), round(2*(nInd(x)-1))) else nrand <- round(seq(0.5,2,len=nrand)*(nInd(x)-1))
+      
+    if(verbose >= 3){cat("  No. of break points, set to:",paste0(nrand, collapse=" "),"\n")}
+    
     if(is.null(stairway_plot_dir)){
       stop("Fatal Error: Directory path for the Stairway Plot 2 executables not specified\n")
     }
@@ -122,7 +122,6 @@ gl.stairway2 <-
       stop("Fatal Error: Generation time (years) not specified\n")
     }
     whether_folded <- "true"
-    project_dir <- simfolder
     nseq <- 2*nInd(x)
     
     
@@ -141,7 +140,7 @@ gl.stairway2 <-
     #sfs <- sfs2
     
     #}
-    if (is.null(sfs)) sfs <- gl.sfs(x, minbinsize=minbinsize, plot.out=FALSE)
+    if (is.null(sfs)) sfs <- gl.sfs(x, minbinsize=1, plot.out=FALSE)
     
     #cut at maxbinsize
     #sfs <- sfs[1:maxbinsize] (not necessary)
@@ -157,15 +156,12 @@ gl.stairway2 <-
     
     if (verbose >= 2) {cat(paste("  Extacting SNP data and creating records for each individual\n"))}
     
-    #### NEED TO DISCUSS THE GUTS OF IT HERE
-    
-    
     # Output the results
     
     write.table(paste("#Ne analysis from SNPs for ",as.character(substitute(x))),
                 file=outfilespec,row.names=FALSE,col.names=FALSE,
                 quote=FALSE)
-    write.table(paste("popid:",simfolder,"# id of the population (no white space)"),
+    write.table(paste("popid:",name,"# id of the population (no white space)"),
                 file=outfilespec,
                 row.names=FALSE,col.names=FALSE,
                 quote=FALSE, sep=" ",append=TRUE)
@@ -201,7 +197,7 @@ gl.stairway2 <-
                 file=outfilespec,
                 row.names=FALSE,col.names=FALSE,
                 quote=FALSE, sep=" ",append=TRUE)
-    write.table(paste("project_dir:", simfolder, "# project directory"),
+    write.table(paste("project_dir:", tempd, "# project directory"),
                 file=outfilespec,
                 row.names=FALSE,col.names=FALSE,
                 quote=FALSE, sep=" ",append=TRUE)
@@ -225,7 +221,7 @@ gl.stairway2 <-
                 file=outfilespec,
                 row.names=FALSE,col.names=FALSE,
                 quote=FALSE, sep=" ",append=TRUE)
-    plottitle <- paste0(plot_title," [",simfolder,"]")
+    plottitle <- plot_title
     write.table(paste("plot_title:",plottitle , "# title of the plot"),
                 file=outfilespec,
                 row.names=FALSE,col.names=FALSE,
@@ -326,15 +322,17 @@ gl.stairway2 <-
         if (os=="linux" | os=="darwin") system(paste0("./",outfile, ".plot.sh"))
         if (os=="windows") system(paste0(outfile, ".plot.bat"))
       }
-      cat("Check plots (pdf and png files) in folder:", file.path(stairway.path, simfolder),".\n")
-      if (cleanup) {
-        unlink(file.path(stairway.path, simfolder,"input"), recursive = TRUE)
-        unlink(file.path(stairway.path, simfolder,"rand*"), recursive = TRUE)
-        unlink(file.path(stairway.path, simfolder,"final"), recursive = TRUE)
-      }
-    setwd(oldpath)
+      cat("Check plots (pdf and png files) in folder:", stairway.path,".\n")
+      
+      res <- read.csv(file.path(tempd,paste0(plottitle,".final.summary")),sep="\t")
+      setwd(oldpath)
+      if (cleanup) unlink(file.path(tempd), recursive = TRUE)
+        
+    
     }
-    res <- read.csv(file.path(stairway.path,simfolder,paste0(plottitle,".final.summary")),sep="\t")
+    
+    
+    
     return(res)
     
 }
