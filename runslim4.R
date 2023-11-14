@@ -1,6 +1,12 @@
+
+#better by isobel
+install.packages("reticulate")
+
 library(slimr)
+
 library(future)
 library(dartR.base)
+
 gl.set.verbosity(0)
 
 
@@ -26,6 +32,7 @@ slim_script(
                initializeGenomicElement(g1, 0, L-1);
                
                #initializeRecombinationRate(rates = 1e-8);
+
                initializeRecombinationRate(rates = c(1e-8,0.5,1e-8,0.5,1e-8,0.5,1e-8,0.5,1e-8), ends=c(1e8-1,1e8,2e8-1,2e8,3e8-1, 3e8,4e8-1, 4e8,5e8-1));     
              }),
   slim_block(1,
@@ -49,12 +56,15 @@ slim_script(
              }),
   
   
+
   
     
   slim_block(1100,late(),
              {
+
                nn = paste("d:/downloads/slim_100-10-100_bottle",slimr_template("ss"),".vcf");
                p1.outputVCFSample(sampleSize=slimr_template("ss"), replace=F,  outputMultiallelics=F,filePath=nn,  simplifyNucleotides=T);
+
                sim.simulationFinished();
              })
 ) -> script_1
@@ -67,9 +77,12 @@ all <- slim_run(scripts,parallel = T)
 
 
 library(geohippos)
+
 #load back into R 
 
+
 gls <- geohippos::gl.read.vcf("d:/downloads/slim_100-10-100_bottle 50 .vcf", verbose=0)
+
 
 #to split into chromosomes...
 gls$chromosome <- factor(ceiling(gls$position/1e8)) #slim simulation
@@ -83,23 +96,26 @@ sfs <-gl.sfs(gls)
 os <- tolower(Sys.info()['sysname']) 
 if (os=="darwin") os <- "mac"
 
-L <- 5e8 #total length of chromosome (for sfs methods)
+L <- 10e8 #total length of chromosome (for sfs methods)
 mu <- 1e-8  #mutation rate
 
 ###############
 #     Epos    #
 ###############
 system.time(
+
   Ne_epos <- gl.epos(gls, epos.path = paste0("./binaries/epos/",os), l = L, u=mu, boot=10, minbinsize =2)
+
   
 )
-plot(Median ~ (X.Time), data=Ne_epos, type="l", lwd=2)
+plot(Median ~ (X.Time), data=Ne_epos, type="l", lwd=2, ylim = c(0, 400), xlim = c(0, 100))
 points(LowerQ ~ (X.Time), data=Ne_epos, type="l", col="blue", lty=2)
 points(UpperQ ~ (X.Time), data=Ne_epos, type="l", col="orange", lty=2)
 
 ###############
 #  STAIRWAYS  #
 ###############
+
 #system.time(
   Ne_sw <- gl.stairway2(gls,simfolder = "stairwaytest", verbose = T,stairway.path="./binaries/stairways/", mu = mu, gentime = 1, run=TRUE, nreps = 30, parallel=5, L=L, minbinsize =1, cleanup = T)
 #)
@@ -110,6 +126,20 @@ points(Ne_sw$year, Ne_sw$Ne_2.5., type="l", lty=2, col="red")
 points(Ne_sw$year, Ne_sw$Ne_97.5., type="l", lty=2, col="red")
 
 
+plot(Ne_sw$year, Ne_sw$Ne_median, type="l", lwd=2, xlab="year", ylab="Ne")
+points(Ne_sw$year, Ne_sw$Ne_12.5., type="l", lty=2, col="blue")
+points(Ne_sw$year, Ne_sw$Ne_87.5., type="l", lty=2, col="blue")
+points(Ne_sw$year, Ne_sw$Ne_2.5., type="l", lty=2, col="green")
+points(Ne_sw$year, Ne_sw$Ne_97.5., type="l", lty=2, col="red")
+
+###############
+# Neestimator #
+###############
+system.time(
+  Ne_ldnest <- gl.LDNe(gls,neest.path = paste0("./binaries/NEestimator/",os), singleton.rm = F, critical = c(0))
+)
+
+gl.gone(gls, outfile = "test", gone.path = "C:/Users/isobe/Desktop/Honours/geohippos/binaries/gone")
 
 
 

@@ -1,15 +1,17 @@
 
 
-#library(dartR)
-#library(devtools)
-#install_github("https://github.com/green-striped-gecko/geohippos")
+library(dartR)
+library(devtools)
+#install_git("https://github.com/green-striped-gecko/geohippos")
 library(geohippos)
 
 library(tictoc)
 tic()
 #gls <- geohippos::gl.read.vcf("./inst/extdata/slim_5c_100.vcf", verbose=0)
+
 #gls <- geohippos::gl.read.vcf("./vcf/slim_200_20-50y_100-5y.vcf")
 gls <- geohippos::gl.read.vcf("d:/downloads/slimout_100-50.vcf")
+
 #split chromosomes...
 
 gls$chromosome <- factor(ceiling(gls$position/1e8)) #slim simulation
@@ -45,6 +47,7 @@ mu <- 1e-8  #mutation rate
 system.time(
   Ne_epos <- gl.epos(gls, epos.path = paste0("./binaries/epos/",os ), l = L, u=mu, boot=10)
 )
+
 plot(Median ~ (X.Time), data=Ne_epos, type="l", lwd=2, ylim=c(0,200))
 points(LowerQ ~ (X.Time), data=Ne_epos, type="l", col="blue", lty=2)
 points(UpperQ ~ (X.Time), data=Ne_epos, type="l", col="orange", lty=2)
@@ -56,10 +59,12 @@ system.time(
   Ne_sw <- gl.stairway2(gls,simfolder = "stairwaytest", verbose = T,stairway.path="./binaries/stairways/", mu = mu, gentime = 1, run=TRUE, nreps = 30, parallel=5, L=L, minbinsize =1, cleanup = T)
 )
 plot(Ne_sw$year, Ne_sw$Ne_median, type="l", lwd=2, xlab="year", ylab="Ne")
+
 points(Ne_sw$year, Ne_sw$Ne_12.5., type="l", lty=2, col="blue")
 points(Ne_sw$year, Ne_sw$Ne_87.5., type="l", lty=2, col="blue")
 points(Ne_sw$year, Ne_sw$Ne_2.5., type="l", lty=2, col="red")
 points(Ne_sw$year, Ne_sw$Ne_97.5., type="l", lty=2, col="red")
+
 
 
 
@@ -69,16 +74,17 @@ points(Ne_sw$year, Ne_sw$Ne_97.5., type="l", lty=2, col="red")
 system.time(
   Ne_gone <- gl.gone(gls,gone.path = paste0("./binaries/gone/",os)) #runs parallel via InputParamters
 )
-#plot(Ne_gone$Generation, Ne_gone$Geometric_mean, type="l")
+plot(Ne_gone$Generation, Ne_gone$Geometric_mean, type="l")
 
 
 ###############
 #   SNEP      #
 ###############
 system.time(
+
   Ne_snep <- gl.snep(gls, snep.path = paste0("./binaries/snep/",os), n.cores=20)
 )
-#plot(Ne ~ GenAgo, data=Ne_snep, type="l")
+plot(Ne ~ GenAgo, data=Ne_snep, type="l")
 
 
 
@@ -88,7 +94,7 @@ system.time(
 system.time(
 Ne_LinkNe <- gl.LinkNe(gls, outfile = "trun", LinkNe.path = paste0("./binaries/linkne/",os), perl = FALSE)
 )
-#plot(1/(2*Ne_LinkNe$MEAN_C), Ne_LinkNe$NE, type="l")
+plot(1/(2*Ne_LinkNe$MEAN_C), Ne_LinkNe$NE, type="l")
 
 ress <- list()
 
@@ -126,10 +132,10 @@ dummy$method <- "LinkNe"
 ress[[5]]<- dummy
 
 ##sim 
-dummy <-data.frame(nr =1:4)
+dummy <-data.frame(nr =1:3)
 
-dummy$year <- c(0,5,   5, 50 , 50, 500)
-dummy$Ne <- c(100,100,20, 20, 200 ,200)
+dummy$year <- c(0 , 50, 550)
+dummy$Ne <- c(302, 500 ,500)
 ##dummy$year <- c(0,25,25,500)
 #dummy$Ne <- c(200,200,100,100)
 #fox
@@ -138,7 +144,7 @@ dummy$Ne <- c(100,100,20, 20, 200 ,200)
 
 
 dummy$method="sim"
-ress[[6]]<- dummy
+ress[[5]]<- dummy
 res <- do.call(rbind, ress)
 library(ggplot2)
 
@@ -148,12 +154,5 @@ ggplot(res, aes(x=year, y=Ne, color=method, group=method))+geom_line()+xlim(c(2,
 
 
 toc()
-
-
-
-
-
-
-
 
 

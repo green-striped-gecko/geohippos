@@ -112,6 +112,15 @@ gl.stairway2 <-
       nrand <- c(round((nInd(x)-1)/2), round(nInd(x)-1), round((nInd(x)-1)*3/2), round(2*(nInd(x)-1)))
       if(verbose >= 3){cat("  No. of break points not specified, set to:",paste0(nrand, collapse=" "),"\n")}
     }
+    ####Added alternative nrand option###
+    if (nrand == 1) {
+      nrand <- c(round(seq(0.4,2,2/5)*(nInd(gls)-1)))
+      if(verbose >= 3){cat("  No. of break points not specified, set to:",paste0(nrand, collapse=" "),"\n")}
+    }
+    if (nrand == 2) {
+      nrand <- c(round(seq(2/8,2,2/8)*(nInd(gls)-1)))
+      if(verbose >= 3){cat("  No. of break points not specified, set to:",paste0(nrand, collapse=" "),"\n")}
+    }
     if(is.null(stairway_plot_dir)){
       stop("Fatal Error: Directory path for the Stairway Plot 2 executables not specified\n")
     }
