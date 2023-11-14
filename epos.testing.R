@@ -55,8 +55,10 @@ ggplot(data, aes(x = X.Time, y = val, colour = stat)) +
 
 
 for (i in 1:nrow(settings)) {
-  
-  print(settings[i,]);
+  currset <- settings[i,];
+  curdf <- test.epos %>% filter(minbin == currset$minbin, greedy == currset$greedy);
+  ggplot(data = curdf, )
+  print(curdf);
 }
 
 test.epos %>% filter(minbin == 1)
