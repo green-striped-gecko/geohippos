@@ -30,6 +30,8 @@ sfs <-gl.sfs(gls)
 os <- tolower(Sys.info()['sysname']) 
 if (os=="darwin") os <- "mac"
 
+source("./R/gl.gone.r")
+
 L <- 5e8 #total length of chromosome (for sfs methods)
 mu <- 1e-8  #mutation rate
 ###############
@@ -67,7 +69,7 @@ points(Ne_sw$year, Ne_sw$Ne_97.5., type="l", lty=2, col="red")
 #     GONE    #
 ###############
 system.time(
-  Ne_gone <- gl.gone(gls,gone.path = paste0("./binaries/gone/",os)) #runs parallel via InputParamters
+  Ne_gone <- gl.gone(gg,gone.path = paste0("./binaries/gone/",os)) #runs parallel via InputParamters
 )
 #plot(Ne_gone$Generation, Ne_gone$Geometric_mean, type="l")
 

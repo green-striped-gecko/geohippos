@@ -11,7 +11,7 @@ fi
 
 ### Set arguments
 
-FILE=$1  ### Data file name for files .ped and .map
+FILE=dummy  ### Data file name for files .ped and .map
 
 ### Take input parameters from file INPUT_PARAMETERS_FILE
 # now included to avoid path troubles when run in parallel
