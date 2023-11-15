@@ -38,7 +38,7 @@ if (os=="Linux") {
 gl2plink(x, outfile = outfile, outpath =gone.path, phen_value=-9, verbose=0)
 
 #SET PATH of INPUT PARAMETER FILE in script_GONE.sh
-system(paste0("./script_Gone.sh ",outfile))
+shell(paste0("script_Gone.sh ",outfile))
 
 
 res<-  read.csv(paste0("Output_Ne_",outfile), sep="\t",skip = 1, header = T)
