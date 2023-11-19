@@ -9,7 +9,7 @@ library(dartR)
 library(tictoc)
 
 #Read in dataframe 
-df <- as.data.frame(read.csv("./maindf.csv", stringsAsFactors = F))
+#df <- as.data.frame(read.csv("./maindf.csv", stringsAsFactors = F))
 
 gdf <- as_tibble(df)
 
@@ -52,8 +52,6 @@ for (i in 1:nrow(test.g)) {
   test.g$loci[[i]] <- nLoc(test.g$gls[[i]])
 }
 
-gone.maf.0.02 <- test.g
-
 
 #=================Convert data to accessible format for plotting=============
 # 
@@ -81,4 +79,6 @@ gone.maf.0.02 <- test.g
 #   labs(colour = "pop init: crash %") +
 #   facet_wrap(model ~ maf, nrow = 3) 
 # gp
-all.gone
+
+
+gone.maf.0.01 <- test.g
