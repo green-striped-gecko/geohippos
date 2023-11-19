@@ -30,7 +30,7 @@ maxNCHROM=-99  ### Maximum number of chromosomes to be analysed (-99 = all chrom
 maxNSNP=50000 ### Maximum approx number of SNPs per chromosomes to be analysed (maximum number is 50000)
 hc=0.05   ### Maximum value of c analysed (recommended 0.05; maximum is 0.5)
 REPS=40   ### Number of replicates to run GONE (recommended 40)
-threads=1  ### Number of threads (if -99 it uses all possible processors)
+threads=5  ### Number of threads (if -99 it uses all possible processors)
 
 ###################################################################
 
