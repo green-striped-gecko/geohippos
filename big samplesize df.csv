@@ -1,0 +1,9 @@
+rep,pop_init,crash_prop,tl,ts,ss,model,filename,runnumb
+1,500,0.5,100,200,30,decline,c:/temp/slim_rep1_pop500_tl100_crash0.5_ts-ybp200_modeldecline_ss30test19-11.vcf,Run_00001
+1,500,0.5,100,200,50,decline,c:/temp/slim_rep1_pop500_tl100_crash0.5_ts-ybp200_modeldecline_ss50test19-11.vcf,Run_00002
+1,500,0.5,100,200,30,expansion,c:/temp/slim_rep1_pop500_tl100_crash0.5_ts-ybp200_modelexpansion_ss30test19-11.vcf,Run_00003
+1,500,0.5,100,200,50,expansion,c:/temp/slim_rep1_pop500_tl100_crash0.5_ts-ybp200_modelexpansion_ss50test19-11.vcf,Run_00004
+1,500,0.5,100,200,30,bottle,c:/temp/slim_rep1_pop500_tl100_crash0.5_ts-ybp200_modelbottle_ss30test19-11.vcf,Run_00005
+1,500,0.5,100,200,50,bottle,c:/temp/slim_rep1_pop500_tl100_crash0.5_ts-ybp200_modelbottle_ss50test19-11.vcf,Run_00006
+1,500,0.5,100,200,30,stable,c:/temp/slim_rep1_pop500_tl100_crash0.5_ts-ybp200_modelstable_ss30test19-11.vcf,Run_00007
+1,500,0.5,100,200,50,stable,c:/temp/slim_rep1_pop500_tl100_crash0.5_ts-ybp200_modelstable_ss50test19-11.vcf,Run_00008

@@ -9,7 +9,7 @@ library(dartR)
 library(tictoc)
 
 #Read in dataframe 
-df <- as.data.frame(read.csv("./maindf.csv", stringsAsFactors = F))
+#df <- as.data.frame(read.csv("./maindf.csv", stringsAsFactors = F))
 
 gdf <- as_tibble(df)
 
@@ -52,15 +52,17 @@ for (i in 1:nrow(test.g)) {
   test.g$loci[[i]] <- nLoc(test.g$gls[[i]])
 }
 
-gone.maf.0.02 <- test.g
+
 
 
 #=================Convert data to accessible format for plotting=============
-extract_epos <- function(df) {
-  res_epos <- data.frame()
-  for (i in 1:nrow(df)) {
-    new_data <- cbind( df[i,c(1:10, 14)], df$eposout1[[i]]);
-    res_epos <- rbind(res_epos, new_data);
-  }
-  return(res_epos);
-}
+# extract_epos <- function(df) {
+#   res_epos <- data.frame()
+#   for (i in 1:nrow(df)) {
+#     new_data <- cbind( df[i,c(1:10, 14)], df$eposout1[[i]]);
+#     res_epos <- rbind(res_epos, new_data);
+#   }
+#   return(res_epos);
+# }
+
+
