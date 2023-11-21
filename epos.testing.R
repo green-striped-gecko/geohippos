@@ -2,10 +2,11 @@
 #           Test Method Settings
 #===============================================
 library(dplyr)
-
+library(data.table)
+library(tidyr)
 #Read in dataframe 
 
-#eposdf <- df
+eposdf <- df
 
 
 #some checks on the input file
@@ -22,48 +23,70 @@ L <- 5e8 #total length of chromosome (for sfs methods)
 mu <- 1e-8  #mutation rate
 
 
-####Run parallel
-# library(doParallel)
-# cl <- makeCluster(4)
-# registerDoParallel()
+##############Set up Epos testing parameters ################
 
-##############Epos testing################
-# settings <- expand_grid(minbin = 1:4, greedy = c("", " -E 2", " -E 5", " -E 10", " -E 20"), .name_repair = "minimal")
-# settings
-# test.epos <- crossing(eposdf, settings)
-# test.epos
-# 
+settings <- expand_grid(minbin = 1:2, greedy = c("", " -E 2", " -E 5"), .name_repair = "minimal")
+settings
+
+
+no.gls <- eposdf %>% select(-gls)
+test.epos <- crossing(no.gls, settings)
+test.epos
+
+#======================Extract gls files======================================
 library(geohippos)
 setwd("C:/Users/Isobel/Desktop/Honours/geohippos")
-###convert all to gls and run epos
-test.epos.all <- test.epos
-test.epos <- test.epos.all
-test.epos$eposout <- as.data.frame()
-for (i in 1:nrow(test.epos)) {
-  #test.epos$gls[[i]] <- gl.read.vcf(test.epos$filename[[i]]);
-  test.epos$eposout1[[i]] <- gl.epos(test.epos$gls[[i]], epos.path = paste0("./binaries/epos/",os),l = L, u=mu, boot=50, minbinsize = test.epos$minbin[[i]])
+
+
+
+get_gls <- function(df) {
+  for (i in 1:nrow(df)) {
+  df$gls[[i]] <- gl.read.vcf(df$filename[[i]]);
+  print(paste("Genlight ", i, " of ", nrow(df), "extracted."))
+  }
+  print("All genlights extracted!")
+  return(df)
 }
+
+#Generate gls files
+eposdf <- get_gls(eposdf)
+
+gls.files <- eposdf %>% select(runnumb, gls)
+
+#===============Join GLS files to main dataset=================================
+all.epos <- left_join(test.epos, gls.files, join_by(runnumb))
+
+##======================Setup parallel=======================================
+library(parallel)
+cl <- makeCluster(4)
+clusterCall(cl, function(x) x^2, 10)
+clusterEvalQ(cl, library(geohippos))
+clusterEvalQ(cl, library(dartR))
+clusterEvalQ(cl, library(adegenet))
+clusterExport(cl, "small.eposdf", envir = .GlobalEnv)
+clusterExport(cl, c("os", "L", "mu"), envir = .GlobalEnv)
+
+
+#=============RUN EPOS IN PARALLEL==================================
+
+
+epos.output <- parSapply(cl, 1:nrow(small.eposdf), function (x) {
+  out = gl.epos(
+    small.eposdf$gls[[x]], 
+    epos.path = paste0("./binaries/epos/",os),
+    l = L, u=mu, 
+    boot=30, 
+    minbinsize = 1)
+  return(out)} )
+
+
+test.epos
 
 #================Extract loci for each run====================================
 
 for (i in 1:nrow(test.epos)) {
   test.epos$loci[[i]] <- nLoc(test.epos$gls[[i]])
 }
-
-
-
-
-for (i in 1:nrow(settings)) {
-  currset <- settings[i,];
-  curdf <- test.epos %>% filter(minbin == currset$minbin, greedy == currset$greedy);
-  #ggplot(data = curdf, )
-  print(head(curdf));
-}
-
-test.epos %>% filter(minbin == 1)
- 
-trial <- test.epos[1:5,]
-trial
 
 #==============add simulated ind filename to dataframe===============================
 
@@ -83,10 +106,23 @@ for (i in 1:nrow(test.epos)) {
 
 #==============Extract data into usable dataframe=============================#
 
-extract_epos <- function(df) {
-  res_epos <- data.frame()
-  for (i in 1:nrow(df)) {
-    new_data <- cbind( df[i,c(1:10, 14)], df$eposout1[[i]]);
+extract_epos <- function(df1, df2) {
+  if(nrow(df1) != ncol(df2)) {
+    print("Error: Dataframe rows not equal to column entries!")
+    return()
+  };
+  res_epos <- data.frame();
+  for (i in 1:nrow(df1)) {
+    new_data <- cbind(df1[i,c(1:11)], as.data.frame(df2[,i]));
+    res_epos <- rbind(res_epos, new_data);
+  }
+  return(res_epos);
+}
+
+df_extract_epos <- function(df1) {
+  res_epos <- data.frame();
+  for (i in 1:nrow(df1)) {
+    new_data <- cbind(df1$eposout1[[i]], df1[i,c(1:7, 9:10)]);
     res_epos <- rbind(res_epos, new_data);
   }
   return(res_epos);
@@ -100,16 +136,31 @@ extract_sim <- function(df) {
   return(sim_data);
 }
 
+ 
+
+#=================Extract data from parallel epos output=========================
+for (i in 1:ncol(epos.output)) {
+  test.epos$eposout[[i]] <- as.data.frame(epos.output[,i])
+}
+
+
 siminds <- extract_sim(test.epos)
 siminds$X.Time <- 2000 - siminds$cycle
 siminds$model <- modelindex$model[siminds$model]
 
 siminds$crash_prop <- as.double(siminds$crash_prop)
 
-ress <- extract_epos(test.epos)
-ress
+res500 <- extract_epos(test.epos, epos.output)
+res500
 
-left_join(x = ress, y = siminds, by = c("pop_init", "crash_prop", "model", "ts", "tl"), relationship = "many-to-many")
+smallres <- extract_epos(small.eposdf, epos.output)
+
+
+
+trialres <- df_extract_epos(trial)
+
+
+left_join(x = res500, y = siminds, by = c("pop_init", "crash_prop", "model", "ts", "tl"), relationship = "many-to-many")
 
 
 
@@ -117,9 +168,9 @@ bin = 1 #(1:4)
 othop = "" #c("", " -E 2", " -E 5", " -E 10", " -E 20")
 p0 <- 200
 cp <- 0.1
-mod = "stable"
+mod = "decline"
 
-curdata <- ress %>% filter(model == mod)
+curdata <- trialres %>% filter(model == mod)
 
 cursims <- siminds %>% filter(model == mod)
 
@@ -131,7 +182,7 @@ tb <- tableGrob(loc.table, rows = NULL)
 
 gp <- ggplot(data = curdata, aes(x = X.Time, y = Median, colour = as.factor(pop_init):as.factor(crash_prop))) +
   geom_line() +
-  geom_line(data = cursims, aes(x = X.Time, y = nind, colour = as.factor(pop_init):as.factor(crash_prop))) +
+  #geom_line(data = cursims, aes(x = X.Time, y = nind, colour = as.factor(pop_init):as.factor(crash_prop))) +
   geom_vline(xintercept = curdata$ts[1], colour = "blue") +
   geom_vline(xintercept = (curdata$ts[1] - curdata$tl[1]), colour = "black") +
   ggtitle(paste0("model: " , curdata$model[1] , 
@@ -146,3 +197,6 @@ gp <- ggplot(data = curdata, aes(x = X.Time, y = Median, colour = as.factor(pop_
 grid.arrange(gp, tb,heights = c(10, 1), widths = c(10, 1))
 table(curdata$loci, curdata$pop_init + curdata$crash_prop)  
 gp
+
+
+trialres

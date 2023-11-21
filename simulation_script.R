@@ -9,6 +9,7 @@ library(plyr)
 library(doParallel)
 library(tidyr)
 library(dplyr)
+library(readr)
 
 ##If slim_run doesn't work
 Sys.setenv(SLIM_HOME = "C:/Users/Isobel/Documents/R/win-library/4.1/slimr")
@@ -170,29 +171,35 @@ outdir <- "c:/temp/"
 
 ###create dataframe of all test combinations
 df <- expand.grid(rep =1,
-                  pop_init = c(500, 200), 
+                  pop_init = c(500), 
                   crash_prop = c(0.5), 
-                  tl = c(100), #trajectory length (from ts)
+                  tl = c(100, 50), #trajectory length (from ts)
                   ts = c(200), #trajectory start (ybp)
-                  ss = c(30, 50, 100),
+                  ss = c(30, 50),
                   model = c("decline", "expansion", "bottle", "stable"))  
 
-df$filename <- paste0(outdir, "slim_rep", df$rep, "_pop", df$pop_init, "_tl", df$tl, "_crash", df$crash_prop, "_ts-ybp", df$ts, "_model", df$model, "_ss", df$ss, "test16-11.vcf")
 df$runnumb <- paste0("Run_",sprintf("%05d",1:nrow(df)))
+
+#=========================================#
+#   Remove duplicates of stable model     #
+#=========================================#
+
+stable <- df %>% filter(model == "stable")
+
+dup_nums <- stable[duplicated(stable[c(1,2,6)]), ]$runnumb
+
+df <- df %>% filter(!(runnumb %in% dup_nums))
+
+df$filename <- paste0(outdir, "slim_rep", df$rep, "_pop", df$pop_init, "_tl", df$tl, "_crash", df$crash_prop, "_ts-ybp", df$ts, "_model", df$model, "_ss", df$ss, "test19-11.vcf")
+
 
 #==============Filter out dataframes where ss > final pop=================================
 #check for any rows 
-df %>% filter(model == "decline") %>% filter(as.numeric(ss) > round((pop_init * crash_prop)))
-##If filtered df not empty, run following code
-
-
-###=======get index numbers
-#ind.remove <- which(df$model == "decline" & (df$ss > (df$pop_init * df$crash_prop)))
-###=======remove from df
-#df <- df[-ind.remove,]
-###==============Runs with higher sample size than final pop are removed===============
-
-
+invalid_ss <- df %>% filter(model == "decline") %>% filter(as.numeric(ss) > round((pop_init * crash_prop)))
+if (nrow(invalid_ss) > 0) {
+  ind.remove <- which(df$model == "decline" & (df$ss > (df$pop_init * df$crash_prop)))
+  df <- df[-ind.remove,]
+}
 
 
 #==============Run all df combinations through SLiM==================================
