@@ -9,7 +9,7 @@ library(dartR)
 library(tictoc)
 
 #Read in dataframe 
-#df <- as.data.frame(read.csv("./maindf.csv", stringsAsFactors = F))
+df <- as.data.frame(read.csv("./big samplesize df.csv", stringsAsFactors = F))
 
 gdf <- as_tibble(df)
 

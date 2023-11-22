@@ -73,7 +73,7 @@ points(UpperQ ~ (X.Time), data=Ne_epos, type="l", col="orange", lty=2)
 #  STAIRWAYS  #
 ###############
 system.time(
-  Ne_sw <- gl.stairway2(gls,simfolder = "stairwaytest", verbose = T,stairway.path="./binaries/stairways/", mu = mu, gentime = 1, run=TRUE, nreps = 30, parallel=5, L=L, minbinsize =1, cleanup = T)
+  Ne_sw <- gl.stairway2(gls, verbose = T,stairway.path="./binaries/stairways/", mu = mu, gentime = 1, run=TRUE, nreps = 30, parallel=5, L=L, minbinsize =1, cleanup = T)
 )
 #plot(Ne_sw$year, Ne_sw$Ne_median, type="l", lwd=2, xlab="year", ylab="Ne")
 #points(Ne_sw$year, Ne_sw$Ne_12.5., type="l", lty=2, col="blue")
@@ -89,7 +89,7 @@ system.time(
 system.time(
   Ne_gone <- gl.gone(gls,gone.path = paste0("./binaries/gone/",os)) #runs parallel via InputParamters
 )
-#plot(Ne_gone$Generation, Ne_gone$Geometric_mean, type="l")
+plot(Ne_gone$Generation, Ne_gone$Geometric_mean, type="l")
 
 
 ###############
