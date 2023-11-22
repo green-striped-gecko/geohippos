@@ -14,7 +14,7 @@ library(tictoc)
 gdf <- as_tibble(df)
 
 ##change directory for filenames##
-gdf$filename <- str_replace(gdf$filename, "c:/temp", "~/R/geohippos/vcf.testing")
+gdf$filename <- str_replace(gdf$filename, "c:/temp", "/data/scratch/isobel/vcf")
 
 
 #check os to find correct binaries
@@ -40,20 +40,20 @@ test.g$gls <- mclapply(1:nrow(test.g), function(x) {
 
 
 #==================Run GONE for all rows================================
-test.g$GONE_01 <- mclapply(1:nrow(test.g), function(x) {
+test.g$GONE_00 <- mclapply(1:nrow(test.g), function(x) {
   out <- gl.gone(test.g$gls[[x]],gone.path = paste0("./binaries/gone/",os), )
   return(out)
 }, mc.cores = 20)
 
-
+test.g$maf <- 0
 #==================Extract loci for each run===================================
 
-for (i in 1:nrow(test.g)) {
-  test.g$loci[[i]] <- nLoc(test.g$gls[[i]])
-}
+locs <- lapply(test.g$gls, function(x) {
+  out <- nLoc(x)
+  return (out)
+})
 
-
-
+test.g$loci <- unlist(locs)
 
 #=================Convert data to accessible format for plotting=============
 # extract_epos <- function(df) {
@@ -65,4 +65,8 @@ for (i in 1:nrow(test.g)) {
 #   return(res_epos);
 # }
 
+outdf <- df_extract_output(test.g, 13, c(1:9, 11, 12))
+fname <- "gonerun22nov1"
+write_csv(x = outdf, file = paste0("/data/scratch/isobel/results/", fname, ".csv"), col_names = T)
 
+curdata <- stairway001.testdf %>% filter(model == "decline")
