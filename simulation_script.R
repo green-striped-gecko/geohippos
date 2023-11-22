@@ -9,7 +9,13 @@ library(plyr)
 library(doParallel)
 library(tidyr)
 library(dplyr)
+library(readr)
 
+##If slim_run doesn't work
+Sys.setenv(SLIM_HOME = "C:/Users/Isobel/Documents/R/win-library/4.1/slimr")
+slim_setup()
+
+#======================SIMULATION SCRIPT======================================
 slim_script(
   slim_block(initialize(),
              {
@@ -165,26 +171,35 @@ outdir <- "c:/temp/"
 
 ###create dataframe of all test combinations
 df <- expand.grid(rep =1,
-                  pop_init = c(500, 200), 
-                  crash_prop = c(0.1, 0.5), 
-                  tl = c(100),
-                  ts = c(200),
-                  ss = c(20),
+                  pop_init = c(500), 
+                  crash_prop = c(0.5), 
+                  tl = c(100, 50), #trajectory length (from ts)
+                  ts = c(200), #trajectory start (ybp)
+                  ss = c(30, 50),
                   model = c("decline", "expansion", "bottle", "stable"))  
 
-df$filename <- paste0(outdir, "slim_rep", df$rep, "_pop", df$pop_init, "_tl", df$tl, "_crash", df$crash_prop, "_ts-ybp", df$ts, "_model", df$model, "_ss", df$ss, "test13-11.vcf")
-df$runnumb <- paste0("Run_",sprintf("%05d",1:10))
+df$runnumb <- paste0("Run_",sprintf("%05d",1:nrow(df)))
+
+#=========================================#
+#   Remove duplicates of stable model     #
+#=========================================#
+
+stable <- df %>% filter(model == "stable")
+
+dup_nums <- stable[duplicated(stable[c(1,2,6)]), ]$runnumb
+
+df <- df %>% filter(!(runnumb %in% dup_nums))
+
+df$filename <- paste0(outdir, "slim_rep", df$rep, "_pop", df$pop_init, "_tl", df$tl, "_crash", df$crash_prop, "_ts-ybp", df$ts, "_model", df$model, "_ss", df$ss, "test19-11.vcf")
+
 
 #==============Filter out dataframes where ss > final pop=================================
 #check for any rows 
-df %>% filter(model == "decline") %>% filter(as.numeric(ss) > round((pop_init * crash_prop)))
-#get index numbers
-ind.remove <- which(df$model == "decline" & (df$ss > (df$pop_init * df$crash_prop)))
-#remove from df
-df <- df[-ind.remove,]
-#==============Runs with higher sample size than final pop are removed===============
-
-
+invalid_ss <- df %>% filter(model == "decline") %>% filter(as.numeric(ss) > round((pop_init * crash_prop)))
+if (nrow(invalid_ss) > 0) {
+  ind.remove <- which(df$model == "decline" & (df$ss > (df$pop_init * df$crash_prop)))
+  df <- df[-ind.remove,]
+}
 
 
 #==============Run all df combinations through SLiM==================================
@@ -205,8 +220,8 @@ slim_run(testscript, parallel = T)
 modelindex <- data.frame(model = c("decline", "expansion", "bottle", "stable"), n = 1:4)
 
 df <- df %>% 
-  mutate(simindfile = paste0("C:/Users/Isobel/Desktop/Honours/geohippos/sim_ind_", 
-                             which(modelindex$model == model), 
+  mutate(simindfile = paste0("C:/Users/Isobel/Desktop/Honours/geohippos/sim_ind_folder/sim_ind_", 
+                             match(model, modelindex$model), 
                                 pop_init, crash_prop, ts, tl, ss, ".txt"))
 df$simindfile
 
@@ -216,9 +231,11 @@ for (i in 1:nrow(df)) {
 }
 #====================================================================================
 
+#===========save df=========================================
+write.csv(df %>% 
+            select(-siminddata), file = "./ss50df.csv")
 
 #=====Reassign df=============
-dfshorttest <- as_tibble(df)
 
 
 #===================convert all to gls and run epos==================================
@@ -229,72 +246,5 @@ for (i in 1:nrow(df)) {
 }
 #===============================================================================
 
-#some checks on the input file
-nLoc(gls)
-nInd(gls)
-pop(gls)<- rep("A", nInd(gls))
-sfs <-gl.sfs(gls)
 
-#check os to find correct binaries
-os <- tolower(Sys.info()['sysname']) 
-if (os=="darwin") os <- "mac"
-
-L <- 5e8 #total length of chromosome (for sfs methods)
-mu <- 1e-8  #mutation rate
-
-
-####Run parallel
-library(doParallel)
-cl <- makeCluster(4)
-registerDoParallel()
-
-##############Epos testing################
-settings <- expand_grid(minbin = 1:4, greedy = c(" -E 2", " -E 5", " -E 10", " -E 20"))
-settings
-test.epos <- crossing(df, settings)
-test.epos
-
-
-
-###convert all to gls and run epos
-for (i in 1:nrow(test.epos[1:4,])) {
-  # test.epos$gls[[i]] <- gl.read.vcf(test.epos$filename[i]);
-  test.epos$eposout[[i]] <- gl.epos(test.epos$gls[[i]], epos.path = paste0("./binaries/epos/",os),
-                          l = L, u=mu, boot=50, minbinsize = test.epos$minbin[[i]], other.options = test.epos$greedy[[i]])
-}
-
-ggplot(data = test.epos, aes(x))
-
-df$filename[[1]]
-gls <- gl.read.vcf(df$filename[[3]])
-###############
-#     Epos    #
-###############
-system.time(
-  Ne_epos <- gl.epos(gls, epos.path = paste0("./binaries/epos/",os), l = L, u=mu, boot=50, other.options = " -E 10", minbinsize = 1)
-  
-)
-i = 3
-data = Ne_epos
-filename = runtest$filename
-
-plot(Median ~ (X.Time), data=Ne_epos, type="l", lwd=2, xlim = c(0,500), ylim = c(0, 1000), main = df$filename[[i]])
-points(LowerQ ~ (X.Time), data=data, type="l", col="blue", lty=2)
-points(UpperQ ~ (X.Time), data=data, type="l", col="orange", lty=2)
-
-
-
-
-
-plot(Median ~ (X.Time), data=df$epos[[i]], type="l", lwd=2, xlim = c(0,400), ylim = c(0, 200), main = df$filename[[i]])
-points(LowerQ ~ (X.Time), data=df$epos[[i]], type="l", col="blue", lty=2)
-points(UpperQ ~ (X.Time), data=df$epos[[i]], type="l", col="orange", lty=2)
-
-epos.list <- expand.grid(gls = df$gls, boots = c(25, 50, 75, 100))
-
-for (i in 1:nrow(epos.list)) {
-  epos.list$Ne[[i]] <- gl.epos(epos.list$gls[[i]], epos.path = paste0("./binaries/epos/",os), l = L, u=mu, boot=epos.list$boots[[i]])
-}
-
-epos.list$Ne
 
