@@ -25,7 +25,7 @@ mu <- 1e-8  #mutation rate
 
 ##############Set up Epos testing parameters ################
 
-settings <- expand_grid(minbin = 1:2, greedy = c("", " -E 2", " -E 5"), .name_repair = "minimal")
+settings <- expand_grid(minbin = 1:2, greedy = c(""), .name_repair = "minimal")
 settings
 
 
