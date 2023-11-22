@@ -7,6 +7,7 @@ library(tidyverse)
 library(geohippos)
 library(dartR)
 library(tictoc)
+library(parallel)
 
 #Read in dataframe 
 #df <- as.data.frame(read.csv("./maindf.csv", stringsAsFactors = F))
@@ -40,12 +41,16 @@ test.g$gls <- mclapply(1:nrow(test.g), function(x) {
 
 
 #==================Run GONE for all rows================================
-test.g$GONE_00 <- mclapply(1:nrow(test.g), function(x) {
+library(geohippos)
+library(dartR)
+library(parallel)
+setwd("~/R/geohippos")
+test.g$GONE_05 <- mclapply(1:nrow(test.g), function(x) {
   out <- gl.gone(test.g$gls[[x]],gone.path = paste0("./binaries/gone/",os), )
   return(out)
 }, mc.cores = 20)
 
-test.g$maf <- 0
+
 #==================Extract loci for each run===================================
 
 locs <- lapply(test.g$gls, function(x) {

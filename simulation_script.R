@@ -161,29 +161,42 @@ slim_script(
 ) -> script_1
 
 ###select folder for vcf files to go###
-outdir <- "c:/temp/"
+outdir <- "~/R/"
 
 ###create dataframe of all test combinations
 df <- expand.grid(rep =1,
-                  pop_init = c(500, 200), 
+                  pop_init = c(1000, 500), 
                   crash_prop = c(0.1, 0.5), 
                   tl = c(100),
                   ts = c(200),
-                  ss = c(20),
+                  ss = c(100,75),
                   model = c("decline", "expansion", "bottle", "stable"))  
 
-df$filename <- paste0(outdir, "slim_rep", df$rep, "_pop", df$pop_init, "_tl", df$tl, "_crash", df$crash_prop, "_ts-ybp", df$ts, "_model", df$model, "_ss", df$ss, "test13-11.vcf")
-df$runnumb <- paste0("Run_",sprintf("%05d",1:10))
+
+df$runnumb <- paste0("Run_",sprintf("%05d", 1:nrow(df)))
+
+
+
+#=========================================#
+#   Remove duplicates of stable model     #
+#=========================================#
+
+stable <- df %>% filter(model == "stable")
+
+dup_nums <- stable[duplicated(stable[c(1,2,6)]), ]$runnumb
+
+df <- df %>% filter(!(runnumb %in% dup_nums))
+
+df$filename <- paste0(outdir, "slim_rep", df$rep, "_pop", df$pop_init, "_tl", df$tl, "_crash", df$crash_prop, "_ts-ybp", df$ts, "_model", df$model, "_ss", df$ss, "_runnum:_", df$runnumb, "_test22-11.vcf")
+
 
 #==============Filter out dataframes where ss > final pop=================================
 #check for any rows 
-df %>% filter(model == "decline") %>% filter(as.numeric(ss) > round((pop_init * crash_prop)))
-#get index numbers
-ind.remove <- which(df$model == "decline" & (df$ss > (df$pop_init * df$crash_prop)))
-#remove from df
-df <- df[-ind.remove,]
-#==============Runs with higher sample size than final pop are removed===============
-
+invalid_ss <- df %>% filter(model == "decline") %>% filter(as.numeric(ss) > round((pop_init * crash_prop)))
+if (nrow(invalid_ss) > 0) {
+  ind.remove <- which(df$model == "decline" & (df$ss > (df$pop_init * df$crash_prop)))
+  df <- df[-ind.remove,]
+}
 
 
 
@@ -192,12 +205,16 @@ df <- df[-ind.remove,]
 testscript <- slim_script_render(script_1, template = df)
 testscript
 
+
+##If slim_run doesn't work
+Sys.setenv(SLIM_HOME = "/data/scratch/isobel/win-library/4.1/slimr")
+slim_setup()
+
 ###run multiple scripts
-plan(multisession, workers = 7)
+plan(multisession, workers = 10)
 slim_run(testscript, parallel = T)
 
 #==============================================================================
-
 
 
 #==============add simulated ind filename to dataframe===============================

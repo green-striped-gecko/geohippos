@@ -30,7 +30,10 @@ settings
 test.sw <- crossing(swdf, settings)
 
 #===================convert to gls for all runs ==============================
-
+library(geohippos)
+library(dartR)
+library(parallel)
+setwd("~/R/geohippos")
 test.sw$gls <- mclapply(1:nrow(test.sw), function(x) {
   out <- gl.read.vcf(test.sw$filename[x])
   return(out)
@@ -40,6 +43,7 @@ test.sw$gls <- mclapply(1:nrow(test.sw), function(x) {
 
 
 #==================Run StairwayPlot for all rows================================
+
 test.sw$stairway <- mclapply(1:nrow(test.sw), function(x) {
 
   out <- gl.stairway2(test.sw$gls[[x]], verbose = T,stairway.path="./binaries/stairways/", mu = mu, gentime = 1, run=TRUE, nreps = 30, parallel=5, L=L, minbinsize = test.sw$minbin[[x]], cleanup = T, nrand = test.sw$breakpoints[[x]])
@@ -81,7 +85,7 @@ outdf <- df_extract_output(test.sw.all, 14, 2:12)
 fname <- "stairwaytest001"
 write_csv(x = outdf, file = paste0("/data/scratch/isobel/results/", fname, ".csv"), col_names = T)
 
-curdata <- stairway001.testdf %>% filter(model == "decline")
+curdata <- stairway001.testdf %>% filter(model == "stable")
 
 
 gp <- ggplot(data = curdata, aes(x = year, y = Ne_median, colour = as.factor(pop_init), linetype = as.factor(crash_prop))) +
@@ -94,15 +98,16 @@ gp <- ggplot(data = curdata, aes(x = year, y = Ne_median, colour = as.factor(pop
                  ", sample size = ", curdata$ss[1])) +
   theme_minimal() +
   xlim(0, 1000) +
-  ylim(0, 600) +
+  ylim(0, 1000) +
   labs(colour = "pop init: crash %") +
   facet_grid(breakpoints~minbin, labeller = label_both)
 gp
 
-loci.labels <- test.sw.all %>% group_by(pop_init, crash_prop) %>%
+loci.labels <- test.sw.all %>% group_by(pop_init) %>%
   summarise(loc = mean(loci))
 loc.long <- data.frame(key = paste(loci.labels$pop_init, loci.labels$crash_prop), loci = loci.labels$loc)
 loc.table <- t(loc.long)
+rownames(loc.table) <- c("Group", "nLoci")
 tb <- tableGrob(loc.table, rows = NULL)
 
 grid.arrange(gp,tb, heights = c(10, 2))

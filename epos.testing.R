@@ -11,9 +11,9 @@ library(tictoc)
 
 #Read in dataframe 
 
- eposdf <- read.csv("big samplesize df.csv")
+eposdf <- read.csv("ss100df.csv")
 # 
- eposdf$filename <- str_replace(eposdf$filename, "c:/temp", "~/R/geohippos/vcf.testing")
+ eposdf$filename <- str_replace(eposdf$filename, "c:/temp", "/data/scratch/isobel/vcf")
 # 
 # eposdf
 
@@ -37,10 +37,13 @@ settings
 test.epos <- as_tibble(crossing(eposdf, settings))
 test.epos
 
-library(geohippos)
+
 
 ###convert all to gls and run epos
-
+library(geohippos)
+library(dartR)
+library(parallel)
+setwd("~/R/geohippos")
 test.epos$gls <- mclapply(1:nrow(test.epos), function(x) {
   out <- gl.read.vcf(test.epos$filename[[x]])
   return(out)
@@ -49,6 +52,7 @@ test.epos$gls <- mclapply(1:nrow(test.epos), function(x) {
 
 
 #==================Run EPOS for all rows================================
+
 test.epos$eposout <- mclapply(1:nrow(test.epos), function(x) {
   out <- gl.epos(test.epos$gls[[x]], epos.path = paste0("./binaries/epos/",os),l = L, u=mu, boot=20, minbinsize = test.epos$minbin[[x]], other.options = test.epos$greedy[[x]])
   return(out)
@@ -86,3 +90,5 @@ gp <- ggplot(data = curdata, aes(x = X.Time, y = Median, colour = as.factor(pop_
 grid.arrange(gp, tb,heights = c(10, 1), widths = c(10, 1))
 table(curdata$loci, curdata$pop_init + curdata$crash_prop)
 
+n <- test.epos %>% filter(model == "bottle", ss == 30)
+n$loci
