@@ -45,7 +45,7 @@ library(geohippos)
 library(dartR)
 library(parallel)
 setwd("~/R/geohippos")
-test.g$GONE_05 <- mclapply(1:nrow(test.g), function(x) {
+test.g$GONE_10 <- mclapply(1:nrow(test.g), function(x) {
   out <- gl.gone(test.g$gls[[x]],gone.path = paste0("./binaries/gone/",os), )
   return(out)
 }, mc.cores = 20)
@@ -75,3 +75,7 @@ fname <- "gonerun22nov1"
 write_csv(x = outdf, file = paste0("/data/scratch/isobel/results/", fname, ".csv"), col_names = T)
 
 curdata <- stairway001.testdf %>% filter(model == "decline")
+
+test.g
+
+test.g.long <- 

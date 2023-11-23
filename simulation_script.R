@@ -9,11 +9,17 @@ library(plyr)
 library(doParallel)
 library(tidyr)
 library(dplyr)
+library(readr)
 
+##If slim_run doesn't work
+Sys.setenv(SLIM_HOME = "C:/Users/Isobel/Documents/R/win-library/4.1/slimr")
+slim_setup()
+
+#======================SIMULATION SCRIPT======================================
 slim_script(
   slim_block(initialize(),
              {
-              
+               
                defineConstant("alpha2", 1e-8);
                defineConstant("L", 5e8);
                defineConstant("model", slimr_template("model"));
@@ -62,93 +68,93 @@ slim_script(
                log.addCustomColumn("ss", "ss;");
                
              }),
-
+  
   slim_block(1000,1200, late(),
              
              {
                startyr = 1200 - ts;
                endyr = 1200 - ts + tl;
                ###Abort simulation if trajectory length is not compatible with trajectory start time
-              if(tl > ts) {
+               if(tl > ts) {
                  sim.simulationFinished();
-                ###create error message###
+                 ###create error message###
                }
                ##separate by trajectory start - delay until start time
-              if ((sim.cycle + 1) > startyr) {
-                
-                ######Decline model#######
-                if (model == 1) {
+               if ((sim.cycle + 1) > startyr) {
+                 
+                 ######Decline model#######
+                 if (model == 1) {
                    
                    ###run until end of trajectory length, relative to start time
+                   x1 = pop_init;
+                   xn = cp * pop_init;
+                   yr = sim.cycle - startyr;
+                   r = log(x1 - xn)/tl;
+                   p1.setSubpopulationSize(asInteger(round(
+                     (x1 - xn)*exp((-r) * yr) + xn)
+                   )); 
+                   
+                 }
+                 
+                 ######Expansion model######
+                 if (model == 2) {
+                   
+                   ###run until end of trajectory length, relative to start time
+                   if (sim.cycle < (endyr + 1)) {
+                     x1 = cp * pop_init;
+                     xn =  pop_init;
+                     yr = sim.cycle - startyr;
+                     r = log(xn/x1)/tl;
+                     
+                     p1.setSubpopulationSize(asInteger(round(
+                       x1*exp(r*yr))
+                     ));
+                   }
+                   if (sim.cycle > endyr) {
+                     p1.setSubpopulationSize(asInteger(pop_init));
+                   }
+                 }
+                 
+                 ######Bottleneck model########
+                 if (model == 3) {
+                   yr = sim.cycle - startyr;
+                   
+                   ###population crash
+                   if (sim.cycle < (startyr + 0.1*tl)) {
                      x1 = pop_init;
                      xn = cp * pop_init;
-                     yr = sim.cycle - startyr;
-                     r = log(x1 - xn)/tl;
+                     tl1 = 0.1 * tl;
+                     r1 = log(x1 - xn)/tl1;
                      p1.setSubpopulationSize(asInteger(round(
-                       (x1 - xn)*exp((-r) * yr) + xn)
-                       )); 
-                  
-                  }
-                
-                ######Expansion model######
-                if (model == 2) {
-                  
-                  ###run until end of trajectory length, relative to start time
-                  if (sim.cycle < (endyr + 1)) {
-                      x1 = cp * pop_init;
-                      xn =  pop_init;
-                      yr = sim.cycle - startyr;
-                      r = log(xn/x1)/tl;
-                      
-                      p1.setSubpopulationSize(asInteger(round(
-                        x1*exp(r*yr))
-                      ));
-                  }
-                    if (sim.cycle > endyr) {
-                        p1.setSubpopulationSize(asInteger(pop_init));
-                  }
-                }
-                
-                ######Bottleneck model########
-                if (model == 3) {
-                  yr = sim.cycle - startyr;
-                  
-                  ###population crash
-                  if (sim.cycle < (startyr + 0.1*tl)) {
-                    x1 = pop_init;
-                    xn = cp * pop_init;
-                    tl1 = 0.1 * tl;
-                    r1 = log(x1 - xn)/tl1;
-                    p1.setSubpopulationSize(asInteger(round(
-                      (x1 - xn)*exp((-r1) * yr) + xn)
-                  ));
-                  }
-                    
-                    # ###Simulate crash - 10% of trajectory length
-                    # if (yr < (0.1 * tl) + 1) {
-                    #   #crash length = cl
-                    #   cl = 0.1*tl;
-                    #   r = 4*log(10)/(cl);
-                    #   p1.setSubpopulationSize(asInteger(round(
-                    #     ((popin - k)/(1 + ((popin/k) - 1)*exp(r*(yr - 0.5*cl))))+k)
-                    #   )); 
-                    # }
-              
-                  ##Recovery after crash
-                  if (sim.cycle > (startyr + 0.1*tl)) {
-                    x1 = p1.individualCount;
-                    xn = pop_init;
-                    tl2 = 0.9 * tl;
-                    r2 = log(xn/x1)/tl2;
-                    p1.setSubpopulationSize(asInteger(round(
-                      x1*exp(r2*yr))
-                    ));
-                    if (p1.individualCount > pop_init) {
-                      p1.setSubpopulationSize(asInteger(pop_init));
-                    }
-                  }
-                }
-              }
+                       (x1 - xn)*exp((-r1) * yr) + xn)
+                     ));
+                   }
+                   
+                   # ###Simulate crash - 10% of trajectory length
+                   # if (yr < (0.1 * tl) + 1) {
+                   #   #crash length = cl
+                   #   cl = 0.1*tl;
+                   #   r = 4*log(10)/(cl);
+                   #   p1.setSubpopulationSize(asInteger(round(
+                   #     ((popin - k)/(1 + ((popin/k) - 1)*exp(r*(yr - 0.5*cl))))+k)
+                   #   )); 
+                   # }
+                   
+                   ##Recovery after crash
+                   if (sim.cycle > (startyr + (0.8*tl))) {
+                     x1 = p1.individualCount;
+                     xn = pop_init;
+                     tl2 = 0.2 * tl;
+                     r2 = log(xn/x1)/tl2;
+                     p1.setSubpopulationSize(asInteger(round(
+                       x1*exp(r2*yr))
+                     ));
+                     if (p1.individualCount > pop_init) {
+                       p1.setSubpopulationSize(asInteger(pop_init));
+                     }
+                   }
+                 }
+               }
                
              }),
   
@@ -161,21 +167,18 @@ slim_script(
 ) -> script_1
 
 ###select folder for vcf files to go###
-outdir <- "~/R/"
+outdir <- "c:/temp/"
 
 ###create dataframe of all test combinations
 df <- expand.grid(rep =1,
                   pop_init = c(1000, 500), 
-                  crash_prop = c(0.1, 0.5), 
-                  tl = c(100),
-                  ts = c(200),
-                  ss = c(100,75),
+                  crash_prop = c(0.5), 
+                  tl = c(100), #trajectory length (from ts)
+                  ts = c(200), #trajectory start (ybp)
+                  ss = c(100, 75),
                   model = c("decline", "expansion", "bottle", "stable"))  
 
-
-df$runnumb <- paste0("Run_",sprintf("%05d", 1:nrow(df)))
-
-
+df$runnumb <- paste0("Run_",sprintf("%05d",1:nrow(df)))
 
 #=========================================#
 #   Remove duplicates of stable model     #
@@ -187,7 +190,7 @@ dup_nums <- stable[duplicated(stable[c(1,2,6)]), ]$runnumb
 
 df <- df %>% filter(!(runnumb %in% dup_nums))
 
-df$filename <- paste0(outdir, "slim_rep", df$rep, "_pop", df$pop_init, "_tl", df$tl, "_crash", df$crash_prop, "_ts-ybp", df$ts, "_model", df$model, "_ss", df$ss, "_runnum:_", df$runnumb, "_test22-11.vcf")
+df$filename <- paste0(outdir, "slim_rep", df$rep, "_pop", df$pop_init, "_tl", df$tl, "_crash", df$crash_prop, "_ts-ybp", df$ts, "_model", df$model, "_ss", df$ss, "_runnum_", df$runnumb, "_test22_11.vcf")
 
 
 #==============Filter out dataframes where ss > final pop=================================
@@ -199,46 +202,42 @@ if (nrow(invalid_ss) > 0) {
 }
 
 
-
-#==============Run all df combinations through SLiM==================================
+#==============Run all df combinations through SLiM=============================
 
 testscript <- slim_script_render(script_1, template = df)
 testscript
 
-
-##If slim_run doesn't work
-Sys.setenv(SLIM_HOME = "/data/scratch/isobel/win-library/4.1/slimr")
-slim_setup()
-
 ###run multiple scripts
-plan(multisession, workers = 10)
+plan(multisession, workers = 7)
 slim_run(testscript, parallel = T)
 
 #==============================================================================
 
 
-#==============add simulated ind filename to dataframe===============================
+
+#==============add simulated ind filename to dataframe==========================
 
 modelindex <- data.frame(model = c("decline", "expansion", "bottle", "stable"), n = 1:4)
 
 df <- df %>% 
-  mutate(simindfile = paste0("C:/Users/Isobel/Desktop/Honours/geohippos/sim_ind_", 
-                             which(modelindex$model == model), 
-                                pop_init, crash_prop, ts, tl, ss, ".txt"))
+  mutate(simindfile = paste0("C:/Users/Isobel/Desktop/Honours/geohippos/sim_ind_folder/sim_ind_", 
+                             match(model, modelindex$model), 
+                             pop_init, crash_prop, ts, tl, ss, ".txt"))
 df$simindfile
 
 ##read in simind data
 for (i in 1:nrow(df)) {
   df$siminddata[[i]] <- read.delim2(df$simindfile[[i]], header = T, sep = ",")
 }
-#====================================================================================
+#===============================================================================
 
+#===========save df=========================================
+write.csv(df, file = "./ss100df.csv")
 
 #=====Reassign df=============
-dfshorttest <- as_tibble(df)
 
 
-#===================convert all to gls and run epos==================================
+#===================convert all to gls and run epos=============================
 for (i in 1:nrow(df)) {
   df$gls[[i]] <- geohippos::gl.read.vcf(df$filename[i]);
   df$epos[[i]] <- gl.epos(df$gls[[i]], epos.path = paste0("./binaries/epos/",os),
@@ -246,72 +245,5 @@ for (i in 1:nrow(df)) {
 }
 #===============================================================================
 
-#some checks on the input file
-nLoc(gls)
-nInd(gls)
-pop(gls)<- rep("A", nInd(gls))
-sfs <-gl.sfs(gls)
 
-#check os to find correct binaries
-os <- tolower(Sys.info()['sysname']) 
-if (os=="darwin") os <- "mac"
-
-L <- 5e8 #total length of chromosome (for sfs methods)
-mu <- 1e-8  #mutation rate
-
-
-####Run parallel
-library(doParallel)
-cl <- makeCluster(4)
-registerDoParallel()
-
-##############Epos testing################
-settings <- expand_grid(minbin = 1:4, greedy = c(" -E 2", " -E 5", " -E 10", " -E 20"))
-settings
-test.epos <- crossing(df, settings)
-test.epos
-
-
-
-###convert all to gls and run epos
-for (i in 1:nrow(test.epos[1:4,])) {
-  # test.epos$gls[[i]] <- gl.read.vcf(test.epos$filename[i]);
-  test.epos$eposout[[i]] <- gl.epos(test.epos$gls[[i]], epos.path = paste0("./binaries/epos/",os),
-                          l = L, u=mu, boot=50, minbinsize = test.epos$minbin[[i]], other.options = test.epos$greedy[[i]])
-}
-
-ggplot(data = test.epos, aes(x))
-
-df$filename[[1]]
-gls <- gl.read.vcf(df$filename[[3]])
-###############
-#     Epos    #
-###############
-system.time(
-  Ne_epos <- gl.epos(gls, epos.path = paste0("./binaries/epos/",os), l = L, u=mu, boot=50, other.options = " -E 10", minbinsize = 1)
-  
-)
-i = 3
-data = Ne_epos
-filename = runtest$filename
-
-plot(Median ~ (X.Time), data=Ne_epos, type="l", lwd=2, xlim = c(0,500), ylim = c(0, 1000), main = df$filename[[i]])
-points(LowerQ ~ (X.Time), data=data, type="l", col="blue", lty=2)
-points(UpperQ ~ (X.Time), data=data, type="l", col="orange", lty=2)
-
-
-
-
-
-plot(Median ~ (X.Time), data=df$epos[[i]], type="l", lwd=2, xlim = c(0,400), ylim = c(0, 200), main = df$filename[[i]])
-points(LowerQ ~ (X.Time), data=df$epos[[i]], type="l", col="blue", lty=2)
-points(UpperQ ~ (X.Time), data=df$epos[[i]], type="l", col="orange", lty=2)
-
-epos.list <- expand.grid(gls = df$gls, boots = c(25, 50, 75, 100))
-
-for (i in 1:nrow(epos.list)) {
-  epos.list$Ne[[i]] <- gl.epos(epos.list$gls[[i]], epos.path = paste0("./binaries/epos/",os), l = L, u=mu, boot=epos.list$boots[[i]])
-}
-
-epos.list$Ne
 
