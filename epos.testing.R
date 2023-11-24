@@ -14,7 +14,7 @@ library(tictoc)
 eposdf <- read.csv("ss100df.csv")
 # 
  eposdf$filename <- str_replace(eposdf$filename, "c:/temp", "/data/scratch/isobel/vcf")
-# 
+
 # eposdf
 
 #some checks on the input file
@@ -32,7 +32,7 @@ mu <- 1e-8  #mutation rate
 
 
 ##############Epos testing################
-settings <- expand_grid(minbin = 1:2, greedy = c("", " -E 2"), .name_repair = "minimal")
+settings <- expand_grid(minbin = 1:2, greedy = c("", " -E 2", " -E 5"), .name_repair = "minimal")
 settings
 test.epos <- as_tibble(crossing(eposdf, settings))
 test.epos

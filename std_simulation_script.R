@@ -1,4 +1,4 @@
-
+`
 library(dartR)
 library(devtools)
 library(slimr)
@@ -12,7 +12,8 @@ library(dplyr)
 library(readr)
 
 ##If slim_run doesn't work
-Sys.setenv(SLIM_HOME = "C:/Users/Isobel/Documents/R/win-library/4.1/slimr")
+Sys.setenv(SLIM_HOME='/home/isobel/slim/bin/slim/bin')
+#Sys.setenv(SLIM_HOME = "/data/scratch/isobel/win-library/4.1/slimr")
 slim_setup()
 
 #======================SIMULATION SCRIPT======================================
@@ -55,18 +56,18 @@ slim_script(
                  exp_pop_init = cp * pop_init;
                  sim.addSubpop("p1", asInteger(round(exp_pop_init)));
                }
-               
-               logfilename = paste0("sim_ind_folder/sim_ind_" + slimr_template("model") + pop_init + cp + ts + tl + ss +".txt");
-               log = community.createLogFile(logfilename, logInterval=10);
-               log.addCycle();
-               log.addCustomColumn("nind", "p1.individualCount;");
-               log.addCustomColumn("model", "model;");
-               log.addCustomColumn("pop_init", "pop_init;");
-               log.addCustomColumn("crash_prop", "cp;");
-               log.addCustomColumn("ts", "ts;");
-               log.addCustomColumn("tl", "tl;");
-               log.addCustomColumn("ss", "ss;");
-               
+               # 
+               # logfilename = paste0("sim_ind_folder/sim_ind_" + slimr_template("model") + pop_init + cp + ts + tl + ss +".txt");
+               # log = community.createLogFile(logfilename, logInterval=10);
+               # log.addCycle();
+               # log.addCustomColumn("nind", "p1.individualCount;");
+               # log.addCustomColumn("model", "model;");
+               # log.addCustomColumn("pop_init", "pop_init;");
+               # log.addCustomColumn("crash_prop", "cp;");
+               # log.addCustomColumn("ts", "ts;");
+               # log.addCustomColumn("tl", "tl;");
+               # log.addCustomColumn("ss", "ss;");
+               # 
              }),
   
   slim_block(1000,1200, late(),
@@ -167,7 +168,7 @@ slim_script(
 ) -> script_1
 
 ###select folder for vcf files to go###
-outdir <- "c:/temp/"
+outdir <- "/data/scratch/isobel/vcf/"
 
 ###create dataframe of all test combinations
 df <- expand.grid(rep =1,
@@ -206,10 +207,10 @@ if (nrow(invalid_ss) > 0) {
 
 testscript <- slim_script_render(script_1, template = df)
 testscript
-
+`
 ###run multiple scripts
 plan(multisession, workers = 7)
-slim_run(testscript, parallel = T)
+slim_run(testscript[[1]], parallel = T)
 
 #==============================================================================
 

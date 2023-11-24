@@ -78,4 +78,33 @@ curdata <- stairway001.testdf %>% filter(model == "decline")
 
 test.g
 
-test.g.long <- 
+test.g.long <- test.g %>%  gather(key = "maf", value = "Ne", -rep, -pop_init, -tl, -ts, -ss, -model, -runnumb, -filename, -gls, -loci)
+
+res.g <- df_extract_output(test.g.long, 12, 1:8)
+
+
+sapply(1:nrow(test.g.long), function(x) {
+  
+  df <- data.frame(test.g.long$Ne[[x]])
+  
+  dummy <- test.g.long[x,c(1:8,10:11)]
+  df <- rbind(df,dummy)
+  return(df)
+})
+
+
+gp <- ggplot(data = curdata, aes(x = X.Time, y = Median, colour = as.factor(pop_init):as.factor(crash_prop))) +
+  geom_line() +
+  geom_vline(xintercept = curdata$ts[1], colour = "blue") +
+  geom_vline(xintercept = (curdata$ts[1] - curdata$tl[1]), colour = "black") +
+  ggtitle(paste0("model: " , curdata$model[1] ,
+                 ", start: " , curdata$ts[1] , "ybp" ,
+                 ", length: " , curdata$tl[1] , "yrs" )) +
+  theme_minimal() +
+  xlim(0, 250) +
+  ylim(0, 600) +
+  labs(colour = "pop init: crash %") +
+  facet_grid(greedy ~ minbin)
+
+grid.arrange(gp, tb,heights = c(10, 1), widths = c(10, 1))
+table(curdata$loci, curdata$pop_init + curdata$crash_prop)
