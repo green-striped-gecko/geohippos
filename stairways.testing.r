@@ -5,15 +5,16 @@
 library(dplyr)
 library(tidyverse)
 library(geohippos)
+library(dartR)
 library(tictoc)
 
 #Read in dataframe 
-df <- as.data.frame(read.csv("./maindf.csv", stringsAsFactors = F))
+df <- read.csv("ss100df.csv")
 
 swdf <- as_tibble(df)
 
 ##change directory for filenames##
-swdf$filename <- str_replace(swdf$filename, "c:/temp", "~/R/vcf.testing")
+swdf$filename <- str_replace(swdf$filename, "c:/temp", "/data/scratch/isobel/vcf")
 
 #check os to find correct binaries
 os <- tolower(Sys.info()['sysname'])
@@ -24,73 +25,89 @@ mu <- 1e-8  #mutation rate
 
 
 #===================Set parameter variations to test ===========================
-settings <- expand_grid(minbin = c(1:2), breakpoints = c(4))
+settings <- expand_grid(minbin = c(1:3), breakpoints = c(4, 5, 8))
 settings
 test.sw <- crossing(swdf, settings)
 
-reserve <- test.sw %>% filter(minbin == 2)
-test.sw <- test.sw %>% filter(minbin == 1)
-test.sw <- reserve
 #===================convert to gls for all runs ==============================
-
+library(geohippos)
+library(dartR)
+library(parallel)
+setwd("~/R/geohippos")
 test.sw$gls <- mclapply(1:nrow(test.sw), function(x) {
   out <- gl.read.vcf(test.sw$filename[x])
   return(out)
   
 }, mc.cores=20)
 
-for (i in 1:nrow(test.sw)) {
-  test.sw$gls[[i]] <- gl.read.vcf(test.sw$filename[[i]])
-}
 
 
 #==================Run StairwayPlot for all rows================================
+
 test.sw$stairway <- mclapply(1:nrow(test.sw), function(x) {
 
   out <- gl.stairway2(test.sw$gls[[x]], verbose = T,stairway.path="./binaries/stairways/", mu = mu, gentime = 1, run=TRUE, nreps = 30, parallel=5, L=L, minbinsize = test.sw$minbin[[x]], cleanup = T, nrand = test.sw$breakpoints[[x]])
-  # newname <- str_replace(test.sw$filename[[x]], "vcf$", "csv")
-  # outname <- str_replace(newname, "^~/R/vcf.testing/", "/home/R/geohippos/filesout/")
-  # write_csv(out, file = outname)
+
   return(out)
     
 }, mc.cores = 20)
 
-stairout <- test.sw$stairway
-
 
 #==================Extract loci for each run===================================
+locs <- lapply(test.sw.all$gls, function(x) {
+  out <- nLoc(x)
+  return (out)
+})
 
-for (i in 1:nrow(test.sw)) {
-  test.sw$loci[i] <- nLoc(test.sw$gls[[i]])
-}
-test.sw$loci
+test.sw.all$loci <- unlist(locs)
 
-#==================Extract Stairway Data into usable dataframe=================
-extract_inf <- function(df1, df2) {
-  if(nrow(df1) != length(df2)) {
-    print("Error: Output data length not equal to input data length")
-    return()
-  }
-  res_stair <- data.frame();
-  for (i in nrow(df1)) {
-    new_data <- cbind(df1[i, c(2:9, 11:12, 15)], df2[i]);
-    res_stair <- rbind(res_stair, new_data);
-  }
-  return(res_stair)
-}
-
-res <- extract_inf(test.sw, stairout)
-res
-
-mod = "decline"
-
-curdata <- res %>% filter(model == mod)
 
 #=================Extract loci data
+# 
+# write.csv(x = res, file = "~/stairwayrundata.csv", col.names = T)
+# 
+# res
+# class(res)
+# write_csv(x = res, file = "~/stairwayplotdata.csv", col_names = T)
+# 
 
-write.csv(x = res, file = "~/stairwayrundata.csv", col.names = T)
+###convert existing outputs to long form
 
-res
-class(res)
-write_csv(x = res, file = "~/stairwayplotdata.csv", col_names = T)
+####Dataset Stairway001.test
+#pop_init: 500, 200
+#crash_prop: 0.5, 0.1
+#tl: 100
+#ts: 200
+#ss: 20
+#minbinsize: 1,2
+#breakpoints: 4,8,10
+outdf <- df_extract_output(test.sw.all, 14, 2:12)
+fname <- "stairwaytest001"
+write_csv(x = outdf, file = paste0("/data/scratch/isobel/results/", fname, ".csv"), col_names = T)
 
+curdata <- stairway001.testdf %>% filter(model == "stable")
+
+
+gp <- ggplot(data = curdata, aes(x = year, y = Ne_median, colour = as.factor(pop_init), linetype = as.factor(crash_prop))) +
+  geom_line() +
+  geom_vline(xintercept = curdata$ts[1], colour = "blue") +
+  geom_vline(xintercept = (curdata$ts[1] - curdata$tl[1]), colour = "black") +
+  ggtitle(paste0("Stairway Plot -- model: " , curdata$model[1] ,
+                 ", start: " , curdata$ts[1] , "ybp" ,
+                 ", length: " , curdata$tl[1] , "yrs" ,
+                 ", sample size = ", curdata$ss[1])) +
+  theme_minimal() +
+  xlim(0, 1000) +
+  ylim(0, 1000) +
+  labs(colour = "pop init: crash %") +
+  facet_grid(breakpoints~minbin, labeller = label_both)
+gp
+
+loci.labels <- test.sw.all %>% group_by(pop_init) %>%
+  summarise(loc = mean(loci))
+loc.long <- data.frame(key = paste(loci.labels$pop_init, loci.labels$crash_prop), loci = loci.labels$loc)
+loc.table <- t(loc.long)
+rownames(loc.table) <- c("Group", "nLoci")
+tb <- tableGrob(loc.table, rows = NULL)
+
+grid.arrange(gp,tb, heights = c(10, 2))
