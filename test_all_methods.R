@@ -74,9 +74,9 @@ library(parallel)
 setwd("~/R/geohippos")
 test.epos$eposout  <- mclapply(1:nrow(test.epos), function(x) {
   out <- gl.epos(test.epos$gls[[x]], epos.path = paste0("./binaries/epos/",os),l = L, u=mu, boot=20, minbinsize = test.epos$minbin[[x]], other.options = test.epos$greedy[[x]])
-  saveRDS(out, file =  file.path("/data/scratch/isobel/results/", paste0(runcode, test.epos$runnumb[x],".rds")))
+  saveRDS(out, file =  file.path("/data/scratch/isobel/results/", paste0("Epos_", runcode, test.epos$runnumb[x],".rds")))
   return(out)
-}, mc.cores = 20)
+}, mc.cores = 10)
 
 colnames(test.epos[ncol(test.epos)]) <- paste0("eposout_", runcode)
 
@@ -102,9 +102,9 @@ test.sw <- test.sw[1:5,]
 
 test.sw$stairway <- mclapply(1:nrow(test.sw), function(x) {
   out <- gl.stairway2(test.sw$gls[[x]], verbose = T,stairway.path="./binaries/stairways/", mu = mu, gentime = 1, run=TRUE, nreps = 30, parallel=5, L=L, minbinsize = test.sw$minbin[[x]], cleanup = T, nrand = test.sw$breakpoints[[x]])
-  saveRDS(out, file =  file.path("/data/scratch/isobel/results/", paste0(runcode, test.sw$runnumb[x],".rds")))
+  saveRDS(out, file =  file.path("/data/scratch/isobel/results/", paste0("Stairway_", runcode, test.sw$runnumb[x],".rds")))
   return(out)
-}, mc.cores = 20)
+}, mc.cores = 10)
 
 
 
@@ -125,9 +125,9 @@ setwd("~/R/geohippos")
 
 test.g$GONE_00 <- mclapply(1:nrow(test.g), function(x) {
   out <- gl.gone(test.g$gls[[x]],gone.path = paste0("./binaries/gone/",os), )
-  saveRDS(out, file = file.path('/data/scratch/isobel/results/', paste0(runcode, test.g$runnumb[x], ".rds")))
+  saveRDS(out, file = file.path('/data/scratch/isobel/results/', paste0("GONE_", runcode, test.g$runnumb[x], ".rds")))
   return(out)
-}, mc.cores = 20)
+}, mc.cores = 10)
 
 
 
