@@ -38,7 +38,12 @@ for (i in 1:nrow(df)) {
 
 df$loci <- unlist(df$loci)
 
-#Separate gls and loci columns
+sfs.list <- list()
+for (i in 1:nrow(df.f)) {
+  sfs.list[i] <- gl.sfs(df.f$gls[[i]])
+}
+
+w#Separate gls and loci columns
 dfgls <- df %>% select(runnumb, gls, loci)
 
 
@@ -68,6 +73,9 @@ test.epos <- as_tibble(crossing(df.cross, ep.settings))
 
 test.epos <- df.f
 
+
+
+
 #Read gls and loci information back in
 test.epos <- left_join(test.epos, dfgls, by = "runnumb")
 
@@ -79,8 +87,8 @@ library(dartR)
 library(parallel)
 setwd("~/R/geohippos")
 test.epos$eposout  <- mclapply(1:nrow(test.epos), function(x) {
-  out <- gl.epos(test.epos$gls[[x]], epos.path = paste0("./binaries/epos/",os),l = L, u=mu, boot=20, minbinsize = 0, other.options = " -E 2")
-  saveRDS(out, file =  file.path("/data/scratch/isobel/results/", paste0("epos_uftest_", runcode, test.epos$id[x],".rds")))
+  out <- gl.epos(test.epos$gls[[x]], epos.path = paste0("./binaries/epos/",os),l = L, u=mu, boot=20, other.options = " -E 2", minbinsize = 1)
+  saveRDS(out, file =  file.path("/data/scratch/isobel/results/", paste0("epos_filttest2_", runcode, test.epos$id[x],".rds")))
   return(out)
 }, mc.cores = 10)
 
@@ -113,7 +121,7 @@ setwd("~/R/geohippos")
 
 test.sw$stairway <- mclapply(1:nrow(test.sw), function(x) {
   out <- gl.stairway2(test.sw$gls[[x]], verbose = T,stairway.path="./binaries/stairways/", mu = mu, gentime = 1, run=TRUE, nreps = 30, parallel=5, L=L, minbinsize = 1, cleanup = T, nrand = 5)
-  saveRDS(out, file =  file.path("/data/scratch/isobel/results/", paste0("Stairway_", runcode, test.sw$id[x],".rds")))
+  saveRDS(out, file =  file.path("/data/scratch/isobel/results/", paste0("Stairway_filttest2", runcode, test.sw$id[x],".rds")))
   return(out)
 }, mc.cores = 10)
 
@@ -135,7 +143,7 @@ setwd("~/R/geohippos")
 ##MAF = 0.0
 
 test.g$GONE_10 <- mclapply(1:nrow(test.g), function(x) {
-  out <- gl.gone(test.g$gls[[x]],gone.path = paste0("./binaries/gone/",os), )
+  out <- gl.gone(test.g$gls[[x]],gone.path = paste0("./binaries/gone/",os))
   saveRDS(out, file = file.path('/data/scratch/isobel/results/', paste0("GONE_10", runcode, test.g$runnumb[x], ".rds")))
   return(out)
 }, mc.cores = 10)
