@@ -70,11 +70,11 @@ slim_script(
                # 
              }),
   
-  slim_block(1000,1200, late(),
+  slim_block(2000,2200, late(),
              
              {
-               startyr = 1200 - ts;
-               endyr = 1200 - ts + tl;
+               startyr = 2200 - ts;
+               endyr = 2200 - ts + tl;
                ###Abort simulation if trajectory length is not compatible with trajectory start time
                if(tl > ts) {
                  sim.simulationFinished();
@@ -116,50 +116,50 @@ slim_script(
                    }
                  }
                  
-                 ######Bottleneck model########
-                 if (model == 3) {
-                   yr = sim.cycle - startyr;
-                   
-                   ###population crash
-                   if (sim.cycle < (startyr + 0.1*tl)) {
-                     x1 = pop_init;
-                     xn = cp * pop_init;
-                     tl1 = 0.1 * tl;
-                     r1 = log(x1 - xn)/tl1;
-                     p1.setSubpopulationSize(asInteger(round(
-                       (x1 - xn)*exp((-r1) * yr) + xn)
-                     ));
-                   }
-                   
-                   # ###Simulate crash - 10% of trajectory length
-                   # if (yr < (0.1 * tl) + 1) {
-                   #   #crash length = cl
-                   #   cl = 0.1*tl;
-                   #   r = 4*log(10)/(cl);
-                   #   p1.setSubpopulationSize(asInteger(round(
-                   #     ((popin - k)/(1 + ((popin/k) - 1)*exp(r*(yr - 0.5*cl))))+k)
-                   #   )); 
-                   # }
-                   
-                   ##Recovery after crash
-                   if (sim.cycle > (startyr + (0.8*tl))) {
-                     x1 = p1.individualCount;
-                     xn = pop_init;
-                     tl2 = 0.2 * tl;
-                     r2 = log(xn/x1)/tl2;
-                     p1.setSubpopulationSize(asInteger(round(
-                       x1*exp(r2*yr))
-                     ));
-                     if (p1.individualCount > pop_init) {
-                       p1.setSubpopulationSize(asInteger(pop_init));
-                     }
-                   }
-                 }
+                 # ######Bottleneck model########
+                 # if (model == 3) {
+                 #   yr = sim.cycle - startyr;
+                 #   
+                 #   ###population crash
+                 #   if (sim.cycle < (startyr + 0.1*tl)) {
+                 #     x1 = pop_init;
+                 #     xn = cp * pop_init;
+                 #     tl1 = 0.1 * tl;
+                 #     r1 = log(x1 - xn)/tl1;
+                 #     p1.setSubpopulationSize(asInteger(round(
+                 #       (x1 - xn)*exp((-r1) * yr) + xn)
+                 #     ));
+                 #   }
+                 #   
+                 #   # ###Simulate crash - 10% of trajectory length
+                 #   # if (yr < (0.1 * tl) + 1) {
+                 #   #   #crash length = cl
+                 #   #   cl = 0.1*tl;
+                 #   #   r = 4*log(10)/(cl);
+                 #   #   p1.setSubpopulationSize(asInteger(round(
+                 #   #     ((popin - k)/(1 + ((popin/k) - 1)*exp(r*(yr - 0.5*cl))))+k)
+                 #   #   )); 
+                 #   # }
+                 #   
+                 #   ##Recovery after crash
+                 #   if (sim.cycle > (startyr + (0.8*tl))) {
+                 #     x1 = p1.individualCount;
+                 #     xn = pop_init;
+                 #     tl2 = 0.2 * tl;
+                 #     r2 = log(xn/x1)/tl2;
+                 #     p1.setSubpopulationSize(asInteger(round(
+                 #       x1*exp(r2*yr))
+                 #     ));
+                 #     if (p1.individualCount > pop_init) {
+                 #       p1.setSubpopulationSize(asInteger(pop_init));
+                 #     }
+                 #   }
+                 # }
                }
                
              }),
   
-  slim_block(1200,late(),
+  slim_block(2200,late(),
              {
                nn = filename;
                p1.outputVCFSample(sampleSize=ss, replace=F,  outputMultiallelics=F,filePath=nn,  simplifyNucleotides=T);
@@ -171,16 +171,17 @@ slim_script(
 outdir <- "/data/scratch/isobel/vcf/"
 
 ###create dataframe of all test combinations
-df <- expand.grid(rep =1,
-                  pop_init = c(1000, 500), 
-                  crash_prop = c(0.5), 
-                  tl = c(100), #trajectory length (from ts)
-                  ts = c(200), #trajectory start (ybp)
-                  ss = c(100, 75),
-                  model = c("decline", "expansion", "bottle", "stable"))  
+df <- expand.grid(rep =1:10,
+                  pop_init = c(1000, 500, 100, 50), 
+                  crash_prop = c(0.5, 0.1, 0.05), 
+                  tl = c(200, 100, 50, 30), #trajectory length (from ts)
+                  ts = c(200, 100, 50, 30), #trajectory start (ybp)
+                  ss = c(200, 100, 50, 20),
+                  model = c("decline", "expansion", "stable"))  
 
 df$runnumb <- paste0("Run_",sprintf("%05d",1:nrow(df)))
 
+df.main1 <- df
 #=========================================#
 #   Remove duplicates of stable model     #
 #=========================================#
@@ -202,15 +203,33 @@ if (nrow(invalid_ss) > 0) {
   df <- df[-ind.remove,]
 }
 
+#============Filter out rows where trajectory length is longer than trajectory start=======
+invalid_tstl <- df %>% filter(tl > ts)
+if (nrow(invalid_tstl) > 0) {
+  ind.remove <- which(df$tl > df$ts)
+  df <- df[-ind.remove,]
+}
+
+#==============Generate final run numbers and filenames======================================================
+df$runnumb <- paste0("Run_",sprintf("%05d",1:nrow(df)))
+
+df$filename <- paste0(outdir, "slim_rep", df$rep, "_pop", df$pop_init, "_tl", df$tl, "_crash", df$crash_prop, "_ts-ybp", df$ts, "_model", df$model, "_ss", df$ss, "_runnum_", df$runnumb, "_final.vcf")
+
 
 #==============Run all df combinations through SLiM=============================
 
-testscript <- slim_script_render(script_1, template = df)
+testscript <- slim_script_render(script_1, template = df, parallel = 20)
 testscript
-`
+
+finalrender2 <- testscript
+
+
 ###run multiple scripts
-plan(multisession, workers = 7)
-slim_run(testscript[[1]], parallel = T)
+library(slimr)
+library(future)
+Sys.setenv(SLIM_HOME='/home/isobel/slim/bin/slim/bin')
+plan(multisession, workers = 25)
+slim_run(finalrender2, parallel = T)
 
 #==============================================================================
 

@@ -24,7 +24,7 @@ cMMb=1  ### CentiMorgans per Megabase (if distance is not available in map file)
 DIST=1  ### none (0), Haldane correction (1) or Kosambi correction (2)
 NGEN=2000 ### Number of generations for which linkage data is obtained in bins
 NBIN=400  ### Number of bins (e.g. if 400, each bin includes NGEN/NBIN = 2000/400 = 5 generations)
-MAF=0.0   ### Minor allele frequency (0-1) (recommended 0)
+MAF=0.1  ### Minor allele frequency (0-1) (recommended 0)
 ZERO=1    ### 0: Remove SNPs with zeroes (1: allow for them)
 maxNCHROM=-99  ### Maximum number of chromosomes to be analysed (-99 = all chromosomes; maximum number is 200)
 maxNSNP=50000 ### Maximum approx number of SNPs per chromosomes to be analysed (maximum number is 50000)
