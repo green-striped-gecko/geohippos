@@ -13,8 +13,7 @@ library(dplyr)
 library(readr)
 
 ##If slim_run doesn't work
-Sys.setenv(SLIM_HOME='/home/isobel/slim/bin/slim/bin')
-#Sys.setenv(SLIM_HOME = "/data/scratch/isobel/win-library/4.1/slimr")
+Sys.setenv(SLIM_HOME = "C:/Users/Isobel/Documents/R/win-library/4.1/slimr")
 slim_setup()
 
 #======================SIMULATION SCRIPT======================================
@@ -26,10 +25,16 @@ slim_script(
                defineConstant("L", 5e8);
                defineConstant("model", slimr_template("model"));
                defineConstant("pop_init", slimr_template("pop_init"));
-               defineConstant("ts", slimr_template("ts"));
-               defineConstant("tl", slimr_template("tl"));
-               defineConstant("cp", slimr_template("crash_prop"));
+               defineConstant("pop_crash", slimr_template("pop_crash"));
+               defineConstant("pop_recov", slimr_template("pop_recov"));
+               defineConstant("crash_st", slimr_template("crash_st"));
+               defineConstant("recov_st", slimr_template("recov_st"));
+               defineConstant("crash_len", slimr_template("crash_len"));
+               defineConstant("recov_len", slimr_template("recov_len"));
+               defineConstant("k_decay", slimr_template("k_decay"));
+               defineConstant("k_growth", slimr_template("k_growth"));
                defineConstant("ss", slimr_template("ss"));
+               defineConstant("runnum", slimr_template("runnumb"));
                defineConstant("filename", slimr_template("filename"));
                
                
@@ -50,76 +55,59 @@ slim_script(
   slim_block(1, early(),
              {
                ##Define initial population size
-                 sim.addSubpop("p1", pop_init);
-
-               # 
-               # logfilename = paste0("sim_ind_folder/sim_ind_" + slimr_template("model") + pop_init + cp + ts + tl + ss +".txt");
-               # log = community.createLogFile(logfilename, logInterval=10);
-               # log.addCycle();
-               # log.addCustomColumn("nind", "p1.individualCount;");
-               # log.addCustomColumn("model", "model;");
-               # log.addCustomColumn("pop_init", "pop_init;");
+               sim.addSubpop("p1", pop_init);
+               
+               
+               logfilename = paste0("/data/scratch/isobel/bottle_log/sim_ind_" + runnum + "mod_" + model + pop_init +".txt");
+               log = community.createLogFile(logfilename, logInterval=10);
+               log.addCycle();
+               log.addCustomColumn("nind", "p1.individualCount;");
+               log.addCustomColumn("model", "model;");
+               log.addCustomColumn("pop_init", "pop_init;");
                # log.addCustomColumn("crash_prop", "cp;");
                # log.addCustomColumn("ts", "ts;");
                # log.addCustomColumn("tl", "tl;");
                # log.addCustomColumn("ss", "ss;");
-               # 
-             }),
-  
-  slim_block(1000,1200, late(),
-             
-             {
-               startyr = 1200 - ts;
-               endyr = 1200 - ts + tl;
-               ###Abort simulation if trajectory length is not compatible with trajectory start time
-               if(tl > ts) {
-                 sim.simulationFinished();
-                 ###create error message###
-               }
-               ##separate by trajectory start - delay until start time
-               if ((sim.cycle + 1) > startyr) {
-
-                   yr = sim.cycle - startyr;
-                   
-                   ###population crash
-                   if (sim.cycle < (startyr + 0.1*tl)) {
-                     x1 = pop_init;
-                     xn = cp * pop_init;
-                     tl1 = 0.1 * tl;
-                     r1 = log(x1 - xn)/tl1;
-                     p1.setSubpopulationSize(asInteger(round(
-                       (x1 - xn)*exp((-r1) * yr) + xn)
-                     ));
-                   }
-                   
-                   # ###Simulate crash - 10% of trajectory length
-                   # if (yr < (0.1 * tl) + 1) {
-                   #   #crash length = cl
-                   #   cl = 0.1*tl;
-                   #   r = 4*log(10)/(cl);
-                   #   p1.setSubpopulationSize(asInteger(round(
-                   #     ((popin - k)/(1 + ((popin/k) - 1)*exp(r*(yr - 0.5*cl))))+k)
-                   #   )); 
-                   # }
-                   
-                   ##Recovery after crash
-                   if (sim.cycle > (startyr + (0.8*tl))) {
-                     x1 = p1.individualCount;
-                     xn = pop_init;
-                     tl2 = 0.2 * tl;
-                     r2 = log(xn/x1)/tl2;
-                     p1.setSubpopulationSize(asInteger(round(
-                       x1*exp(r2*yr))
-                     ));
-                     if (p1.individualCount > pop_init) {
-                       p1.setSubpopulationSize(asInteger(pop_init));
-                     }
-                   }
-               }
                
              }),
   
-  slim_block(1200,late(),
+  slim_block(2000,2300, late(), {
+    
+    
+    ###Delay until start time (set up finalise each run at the same time)
+    if (sim.cycle > (crash_st - 1)) {
+      
+      ###Start population decay
+      if (sim.cycle < (crash_st + crash_len + 1)) {
+        k = k_decay;
+        n = sim.cycle - crash_st;
+        newsize = asInteger(round(pop_init*exp(-k*n)));
+        if (newsize < pop_crash) {
+          newsize = pop_crash
+        };
+        p1.setSubpopulationSize(newsize);
+      }
+      
+      ###Start population recovery
+      if (sim.cycle > (recov_st - 1)) {
+        k = k_growth;
+        n = sim.cycle - recov_st;
+        newsize = asInteger(round(pop_crash*exp(k*n)));
+        if (newsize > pop_recov) {
+          newsize = pop_recov;
+        };
+        p1.setSubpopulationSize(newsize);
+      }
+    }
+    
+        
+
+             
+               
+               
+}),
+  
+  slim_block(2301,late(),
              {
                nn = filename;
                p1.outputVCFSample(sampleSize=ss, replace=F,  outputMultiallelics=F,filePath=nn,  simplifyNucleotides=T);
@@ -128,27 +116,41 @@ slim_script(
 ) -> script_bottle
 
 ###select folder for vcf files to go###
-outdir <- "/data/scratch/isobel/vcf/"
+outdir <- "/data/scratch/isobel/bottle_vcf/"
 
 ###create dataframe of all test combinations
-df <- expand.grid(rep =1,
-                  pop_init = c(1000, 500), 
-                  crash_prop = c(0.5), 
-                  tl = c(100), #trajectory length (from ts)
-                  ts = c(200), #trajectory start (ybp)
-                  crl = c(10), #crash length - time for population to drop to crashed size
-                  rl = c(20), #recovery length, time for population to recover from crashed size
-                  lag = c(50), #lag time between pop crash and recovery
-                  ss = c(100, 75))  
+bottledf <- data.frame(model = c("croc", "croc", "whale", "whale", "seal", "seal", "frog", "frog"), 
+                       pop_init = c(7500, 15000, 6000, 8000, 2100, 4200, 50, 100), 
+                       pop_crash = c(909, 909, 83, 83, 872, 872, 10, 10),
+                       pop_recov = c(7500, 7500, 4000, 4000, 2100, 2100, 50, 50),
+                       crash_st = c(2222, 2222,2067, 2067, 2027, 2027, 2257, 2257),
+                       recov_st = c(2248, 2248, 2249, 2249, 2263, 2263, 2278, 2278),
+                       crash_len = c(10, 10, 130, 130, 173, 173, 15, 15),
+                       recov_len = c(27, 27, 46, 46, 16, 16, 7, 7),
+                       k_decay = c(0.211, 0.280, 0.033, 0.035, 0.005, 0.009, 0.107, 0.154),
+                       k_growth = c(0.0782, 0.0782, 0.0842, 0.0842, 0.0549, 0.0549, 0.2299, 0.2299))
 
+
+df <- crossing(rep =1:10, bottledf, ss = c(200, 100, 50, 20))
 
 df$runnumb <- paste0("Run_",sprintf("%05d",1:nrow(df)))
 
-#==============Run all df combinations through SLiM=============================
-testscript <- slim_script_render(script_1, template = df)
-testscript
-`
-###run multiple scripts
-plan(multisession, workers = 7)
-slim_run(testscript[[1]], parallel = T)
+###==============Filter out dataframes where ss > final pop=================================
+#check for any rows 
+invalid_ss <- df %>% filter(as.numeric(ss) > as.numeric(pop_recov)) %>% select(runnumb)
+if (nrow(invalid_ss) > 0) {
+  df <- df %>% filter(!(runnumb %in% invalid_ss$runnumb))
+}
 
+df$runnumb <- paste0("Run_",sprintf("%05d",1:nrow(df)))
+df$filename <- paste0(outdir, "bottle_", df$runnumb, "_model", df$model, "_rep", df$rep, "_pop", df$pop_init,  "_ss", df$ss,  "_final.vcf")
+
+
+###run multiple scripts
+library(slimr)
+library(future)
+Sys.setenv(SLIM_HOME='/home/isobel/slim/bin/slim/bin')
+plan(multisession, workers = 20)
+
+testscript <- slim_script_render(script_bottle, template = df, parallel = 20)
+sr <- slim_run(testscript, parallel = T)

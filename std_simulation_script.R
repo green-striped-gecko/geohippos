@@ -1,4 +1,4 @@
-`
+
 library(dartR)
 library(devtools)
 library(slimr)
@@ -30,6 +30,7 @@ slim_script(
                defineConstant("cp", slimr_template("crash_prop"));
                defineConstant("ss", slimr_template("ss"));
                defineConstant("filename", slimr_template("filename"));
+            
                
                
                #defineConstant("simlen", 5000);
@@ -56,21 +57,21 @@ slim_script(
                  exp_pop_init = cp * pop_init;
                  sim.addSubpop("p1", asInteger(round(exp_pop_init)));
                }
-               # 
-               # logfilename = paste0("sim_ind_folder/sim_ind_" + slimr_template("model") + pop_init + cp + ts + tl + ss +".txt");
-               # log = community.createLogFile(logfilename, logInterval=10);
-               # log.addCycle();
-               # log.addCustomColumn("nind", "p1.individualCount;");
-               # log.addCustomColumn("model", "model;");
-               # log.addCustomColumn("pop_init", "pop_init;");
-               # log.addCustomColumn("crash_prop", "cp;");
-               # log.addCustomColumn("ts", "ts;");
-               # log.addCustomColumn("tl", "tl;");
-               # log.addCustomColumn("ss", "ss;");
-               # 
+
+               logfilename = paste0("/data/scratch/isobel/log/sim_ind_" + "_rn" + slimr_template("runnumb") + "m" + model + "_p" + pop_init + "_cp" + cp + "_ts" + ts + "_tl" + tl + "_ss" + ss + "f3.txt");
+               log = community.createLogFile(logfilename, logInterval=10);
+               log.addCycle();
+               log.addCustomColumn("nind", "p1.individualCount;");
+               log.addCustomColumn("model", "model;");
+               log.addCustomColumn("pop_init", "pop_init;");
+               log.addCustomColumn("crash_prop", "cp;");
+               log.addCustomColumn("ts", "ts;");
+               log.addCustomColumn("tl", "tl;");
+               log.addCustomColumn("ss", "ss;");
+
              }),
   
-  slim_block(2000,2200, late(),
+  slim_block(2000,2201, late(),
              
              {
                startyr = 2200 - ts;
@@ -101,7 +102,7 @@ slim_script(
                  if (model == 2) {
                    
                    ###run until end of trajectory length, relative to start time
-                   if (sim.cycle < (endyr + 1)) {
+                   if (sim.cycle < endyr) {
                      x1 = cp * pop_init;
                      xn =  pop_init;
                      yr = sim.cycle - startyr;
@@ -111,7 +112,7 @@ slim_script(
                        x1*exp(r*yr))
                      ));
                    }
-                   if (sim.cycle > endyr) {
+                   if (sim.cycle > (endyr - 1)) {
                      p1.setSubpopulationSize(asInteger(pop_init));
                    }
                  }
@@ -159,7 +160,7 @@ slim_script(
                
              }),
   
-  slim_block(2200,late(),
+  slim_block(2201,late(),
              {
                nn = filename;
                p1.outputVCFSample(sampleSize=ss, replace=F,  outputMultiallelics=F,filePath=nn,  simplifyNucleotides=T);
@@ -168,7 +169,7 @@ slim_script(
 ) -> script_1
 
 ###select folder for vcf files to go###
-outdir <- "/data/scratch/isobel/vcf/"
+outdir <- "/data/scratch/isobel/vcf_std_set2/"
 
 ###create dataframe of all test combinations
 df <- expand.grid(rep =1:10,
@@ -192,44 +193,47 @@ dup_nums <- stable[duplicated(stable[c(1,2,6)]), ]$runnumb
 
 df <- df %>% filter(!(runnumb %in% dup_nums))
 
-df$filename <- paste0(outdir, "slim_rep", df$rep, "_pop", df$pop_init, "_tl", df$tl, "_crash", df$crash_prop, "_ts-ybp", df$ts, "_model", df$model, "_ss", df$ss, "_runnum_", df$runnumb, "_test22_11.vcf")
-
 
 #==============Filter out dataframes where ss > final pop=================================
 #check for any rows 
-invalid_ss <- df %>% filter(model == "decline") %>% filter(as.numeric(ss) > round((pop_init * crash_prop)))
+invalid_ss <- df %>% filter(as.numeric(ss) > as.numeric(pop_init)) %>% select(runnumb)
 if (nrow(invalid_ss) > 0) {
-  ind.remove <- which(df$model == "decline" & (df$ss > (df$pop_init * df$crash_prop)))
-  df <- df[-ind.remove,]
+  df <- df %>% filter(!(runnumb %in% invalid_ss$runnumb))
+}
+
+invalid_ss_dec <- df %>% filter(model == "decline") %>% filter(as.numeric(ss) > round((pop_init * crash_prop))) %>% select(runnumb)
+if (nrow(invalid_ss_dec) > 0) {
+  df <- df %>% filter(!(runnumb %in% invalid_ss_dec$runnumb))
 }
 
 #============Filter out rows where trajectory length is longer than trajectory start=======
-invalid_tstl <- df %>% filter(tl > ts)
+invalid_tstl <- df %>% filter(tl > ts) %>% select(runnumb)
 if (nrow(invalid_tstl) > 0) {
-  ind.remove <- which(df$tl > df$ts)
-  df <- df[-ind.remove,]
+  df <- df %>% filter(!(runnumb %in% invalid_tstl$runnumb))
 }
 
 #==============Generate final run numbers and filenames======================================================
-df$runnumb <- paste0("Run_",sprintf("%05d",1:nrow(df)))
+df$runnumb <- paste0("Run2_",sprintf("%05d",1:nrow(df)))
 
-df$filename <- paste0(outdir, "slim_rep", df$rep, "_pop", df$pop_init, "_tl", df$tl, "_crash", df$crash_prop, "_ts-ybp", df$ts, "_model", df$model, "_ss", df$ss, "_runnum_", df$runnumb, "_final.vcf")
+df$filename <- paste0(outdir, "_", df$runnumb, "_slim_rep", df$rep, "_pop", df$pop_init, "_tl", df$tl, "_crash", df$crash_prop, "_ts-ybp", df$ts, "_model", df$model, "_ss", df$ss,  "_final_std_set2.vcf")
+
 
 
 #==============Run all df combinations through SLiM=============================
-
-testscript <- slim_script_render(script_1, template = df, parallel = 20)
-testscript
+df <- dfb
+testscript <- slim_script_render(script_1, template = df, parallel = 30)
+testscript[[6]]
 
 finalrender2 <- testscript
-
-
+final4 <- testscript
+final4.1 <- testscript[1:3000]
+final4.2 <- testscript[3001:5930]
 ###run multiple scripts
 library(slimr)
 library(future)
 Sys.setenv(SLIM_HOME='/home/isobel/slim/bin/slim/bin')
-plan(multisession, workers = 25)
-slim_run(finalrender2, parallel = T)
+plan(multisession, workers = 34)
+sr <- slim_run(final4.2, parallel = T)
 
 #==============================================================================
 
