@@ -116,7 +116,7 @@ slim_script(
 ) -> script_bottle
 
 ###select folder for vcf files to go###
-outdir <- "/data/scratch/isobel/bottle_vcf/"
+outdir <- "/data/scratch/isobel/bottle_vcf_set3/"
 
 ###create dataframe of all test combinations
 bottledf <- data.frame(model = c("croc", "croc", "whale", "whale", "seal", "seal", "frog", "frog"), 
@@ -150,7 +150,7 @@ df$filename <- paste0(outdir, "bottle_", df$runnumb, "_model", df$model, "_rep",
 library(slimr)
 library(future)
 Sys.setenv(SLIM_HOME='/home/isobel/slim/bin/slim/bin')
-plan(multisession, workers = 20)
+plan(multisession, workers = 35)
 
-testscript <- slim_script_render(script_bottle, template = df, parallel = 20)
+testscript <- slim_script_render(script_bottle, template = df, parallel = 35)
 sr <- slim_run(testscript, parallel = T)

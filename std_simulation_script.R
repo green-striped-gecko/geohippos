@@ -58,7 +58,7 @@ slim_script(
                  sim.addSubpop("p1", asInteger(round(exp_pop_init)));
                }
 
-               logfilename = paste0("/data/scratch/isobel/log/sim_ind_" + "_rn" + slimr_template("runnumb") + "m" + model + "_p" + pop_init + "_cp" + cp + "_ts" + ts + "_tl" + tl + "_ss" + ss + "f3.txt");
+               logfilename = paste0("/data/scratch/isobel/log/sim_ind_" + "_rn" + slimr_template("runnumb") + "m" + model + "_p" + pop_init + "_cp" + cp + "_ts" + ts + "_tl" + tl + "_ss" + ss + "f_set3.txt");
                log = community.createLogFile(logfilename, logInterval=10);
                log.addCycle();
                log.addCustomColumn("nind", "p1.individualCount;");
@@ -169,7 +169,7 @@ slim_script(
 ) -> script_1
 
 ###select folder for vcf files to go###
-outdir <- "/data/scratch/isobel/vcf_std_set2/"
+outdir <- "/data/scratch/isobel/vcf_std_set3/"
 
 ###create dataframe of all test combinations
 df <- expand.grid(rep =1:10,
@@ -215,7 +215,7 @@ if (nrow(invalid_tstl) > 0) {
 #==============Generate final run numbers and filenames======================================================
 df$runnumb <- paste0("Run2_",sprintf("%05d",1:nrow(df)))
 
-df$filename <- paste0(outdir, "_", df$runnumb, "_slim_rep", df$rep, "_pop", df$pop_init, "_tl", df$tl, "_crash", df$crash_prop, "_ts-ybp", df$ts, "_model", df$model, "_ss", df$ss,  "_final_std_set2.vcf")
+df$filename <- paste0(outdir, "_", df$runnumb, "_slim_rep", df$rep, "_pop", df$pop_init, "_tl", df$tl, "_crash", df$crash_prop, "_ts-ybp", df$ts, "_model", df$model, "_ss", df$ss,  "_final_std_set3.vcf")
 
 
 
@@ -224,16 +224,15 @@ df <- dfb
 testscript <- slim_script_render(script_1, template = df, parallel = 30)
 testscript[[6]]
 
-finalrender2 <- testscript
-final4 <- testscript
-final4.1 <- testscript[1:3000]
-final4.2 <- testscript[3001:5930]
+
+final2.1 <- testscript[1:3000]
+final2.2 <- testscript[3001:5930]
 ###run multiple scripts
 library(slimr)
 library(future)
 Sys.setenv(SLIM_HOME='/home/isobel/slim/bin/slim/bin')
-plan(multisession, workers = 34)
-sr <- slim_run(final4.2, parallel = T)
+plan(multisession, workers = 35)
+sr <- slim_run(testscript, parallel = T)
 
 #==============================================================================
 
