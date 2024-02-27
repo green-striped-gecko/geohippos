@@ -172,7 +172,7 @@ slim_script(
 outdir <- "/data/scratch/isobel/vcf_std_set3/"
 
 ###create dataframe of all test combinations
-df <- expand.grid(rep =1:10,
+df <- expand.grid(#rep =1:10,
                   pop_init = c(1000, 500, 100, 50), 
                   crash_prop = c(0.5, 0.1, 0.05), 
                   tl = c(200, 100, 50, 30), #trajectory length (from ts)
@@ -182,7 +182,6 @@ df <- expand.grid(rep =1:10,
 
 df$runnumb <- paste0("Run_",sprintf("%05d",1:nrow(df)))
 
-df.main1 <- df
 #=========================================#
 #   Remove duplicates of stable model     #
 #=========================================#
@@ -196,18 +195,18 @@ df <- df %>% filter(!(runnumb %in% dup_nums))
 
 #==============Filter out dataframes where ss > final pop=================================
 #check for any rows 
-invalid_ss <- df %>% filter(as.numeric(ss) > as.numeric(pop_init)) %>% select(runnumb)
+invalid_ss <- df %>% filter(as.numeric(ss) > as.numeric(pop_init))
 if (nrow(invalid_ss) > 0) {
   df <- df %>% filter(!(runnumb %in% invalid_ss$runnumb))
 }
 
-invalid_ss_dec <- df %>% filter(model == "decline") %>% filter(as.numeric(ss) > round((pop_init * crash_prop))) %>% select(runnumb)
+invalid_ss_dec <- df %>% filter(model == "decline") %>% filter(as.numeric(ss) > round((pop_init * crash_prop)))
 if (nrow(invalid_ss_dec) > 0) {
   df <- df %>% filter(!(runnumb %in% invalid_ss_dec$runnumb))
 }
 
 #============Filter out rows where trajectory length is longer than trajectory start=======
-invalid_tstl <- df %>% filter(tl > ts) %>% select(runnumb)
+invalid_tstl <- df %>% filter(tl > ts)
 if (nrow(invalid_tstl) > 0) {
   df <- df %>% filter(!(runnumb %in% invalid_tstl$runnumb))
 }
@@ -217,7 +216,8 @@ df$runnumb <- paste0("Run2_",sprintf("%05d",1:nrow(df)))
 
 df$filename <- paste0(outdir, "_", df$runnumb, "_slim_rep", df$rep, "_pop", df$pop_init, "_tl", df$tl, "_crash", df$crash_prop, "_ts-ybp", df$ts, "_model", df$model, "_ss", df$ss,  "_final_std_set3.vcf")
 
-
+#Write excel sheet
+write_csv(df, file = "/data/scratch/isobel/combination_set.csv")
 
 #==============Run all df combinations through SLiM=============================
 df <- dfb

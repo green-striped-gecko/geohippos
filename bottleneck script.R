@@ -33,9 +33,9 @@ slim_script(
                defineConstant("recov_len", slimr_template("recov_len"));
                defineConstant("k_decay", slimr_template("k_decay"));
                defineConstant("k_growth", slimr_template("k_growth"));
-               defineConstant("ss", slimr_template("ss"));
+               #defineConstant("ss", slimr_template("ss"));
                defineConstant("runnum", slimr_template("runnumb"));
-               defineConstant("filename", slimr_template("filename"));
+               #defineConstant("filename", slimr_template("filename"));
                
                
                #defineConstant("simlen", 5000);
@@ -58,8 +58,8 @@ slim_script(
                sim.addSubpop("p1", pop_init);
                
                
-               logfilename = paste0("/data/scratch/isobel/bottle_log/sim_ind_" + runnum + "mod_" + model + pop_init +".txt");
-               log = community.createLogFile(logfilename, logInterval=10);
+               logfilename = paste0("/data/scratch/isobel/bottle_log/bottle_sim" + runnum + "mod_" + model + pop_init +".txt");
+               log = community.createLogFile(logfilename, logInterval=5);
                log.addCycle();
                log.addCustomColumn("nind", "p1.individualCount;");
                log.addCustomColumn("model", "model;");
@@ -109,8 +109,8 @@ slim_script(
   
   slim_block(2301,late(),
              {
-               nn = filename;
-               p1.outputVCFSample(sampleSize=ss, replace=F,  outputMultiallelics=F,filePath=nn,  simplifyNucleotides=T);
+               #nn = filename;
+               #p1.outputVCFSample(sampleSize=ss, replace=F,  outputMultiallelics=F,filePath=nn,  simplifyNucleotides=T);
                sim.simulationFinished();   
              })
 ) -> script_bottle
@@ -131,7 +131,8 @@ bottledf <- data.frame(model = c("croc", "croc", "whale", "whale", "seal", "seal
                        k_growth = c(0.0782, 0.0782, 0.0842, 0.0842, 0.0549, 0.0549, 0.2299, 0.2299))
 
 
-df <- crossing(rep =1:10, bottledf, ss = c(200, 100, 50, 20))
+df <- crossing(bottledf, ss = c(200, 100, 50, 20))
+
 
 df$runnumb <- paste0("Run_",sprintf("%05d",1:nrow(df)))
 
@@ -150,7 +151,7 @@ df$filename <- paste0(outdir, "bottle_", df$runnumb, "_model", df$model, "_rep",
 library(slimr)
 library(future)
 Sys.setenv(SLIM_HOME='/home/isobel/slim/bin/slim/bin')
-plan(multisession, workers = 35)
+plan(multisession, workers = 8)
 
-testscript <- slim_script_render(script_bottle, template = df, parallel = 35)
+testscript <- slim_script_render(script_bottle, template = df, parallel = 8)
 sr <- slim_run(testscript, parallel = T)
