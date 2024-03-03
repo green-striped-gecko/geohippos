@@ -67,6 +67,7 @@ gl.read.vcf <- function(vcffile,
         }
         
         ploidy(x) <- 2
+        if (is.null(pop(x))) pop(x)<- rep("A", nInd(x))
         x <- gl.compliance.check(x)
         
         x$other$loc.metrics <- cbind(x$other$loc.metrics,info)

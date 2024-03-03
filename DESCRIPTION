@@ -3,7 +3,7 @@ Type: Package
 Title: Genomic estimation of historic population sizes
 Version: 1.1
 Date: 2023-11-06
-Depends: R (>= 3.5), dartR, parallel, furrr
+Depends: R (>= 3.5), dartR.base, dartR.data, parallel, furrr
 Author@R: c(
             person("Bernd", "Gruber", email="bernd.gruber@canberra.edu.au",
             role=c("aut","cre")))

@@ -197,7 +197,7 @@ gl.stairway2 <-
                 file=outfilespec,
                 row.names=FALSE,col.names=FALSE,
                 quote=FALSE, sep=" ",append=TRUE)
-    write.table(paste("project_dir:", tempd, "# project directory"),
+    write.table(paste("project_dir:", "files", "# project directory"),
                 file=outfilespec,
                 row.names=FALSE,col.names=FALSE,
                 quote=FALSE, sep=" ",append=TRUE)
@@ -324,7 +324,7 @@ gl.stairway2 <-
       }
       cat("Check plots (pdf and png files) in folder:", stairway.path,".\n")
       
-      res <- read.csv(file.path(tempd,paste0(plottitle,".final.summary")),sep="\t")
+      res <- read.csv(file.path(tempd,"files",paste0(plottitle,".final.summary")),sep="\t")
       setwd(oldpath)
       if (cleanup) unlink(file.path(tempd), recursive = TRUE)
         
