@@ -98,7 +98,7 @@ gl.epos <- function(x,epos.path, sfs=NULL, minbinsize=1,folded=TRUE, l=NULL,
   # DO THE JOB
   old.path <- getwd()
   setwd(tempd)
-
+  on.exit(setwd(old.path))
   if (boot>0) {
     if (os=="linux") system("chmod 777 bootSfs")
     bsdummy <- system(bootcmd, intern = TRUE)

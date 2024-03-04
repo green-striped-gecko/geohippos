@@ -33,7 +33,7 @@ gl.stairway2 <-
     
     funname <- match.call()[[1]]
     build <- "Juliette"
-    tempd <-  tempfile(pattern = "dir")
+    tempd <-  tempdir()
     dir.create(tempd, showWarnings = FALSE)
     outfile <- paste0("blueprint")
     outfilespec <- file.path(tempd, outfile)
@@ -261,6 +261,7 @@ gl.stairway2 <-
     {
       oldpath <- getwd()
       setwd(stairway.path)
+      on.exit(setwd(oldpath))
       
       system(paste0("java -cp stairway_plot_es Stairbuilder ",outfile ))
       #make .sh file executable...

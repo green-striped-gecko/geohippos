@@ -27,22 +27,23 @@ gl.gone <- function(x,outfile="dummy" ,gone.path, cleanup=TRUE)  #need to be abl
   }
   gone.path <- tempd
 
-op <- getwd()
+old.path <- getwd()
 setwd(gone.path)
+on.exit(setwd(old.path))
 if (os=="Linux") {
   system("chmod 777 script_Gone.sh")
   system("chmod 777 ./PROGRAMMES/*")
 }
 
 #TODO: create INPUT PARAMETER FILE
-gl2plink(x, outfile = outfile, outpath =gone.path, phen_value=-9, verbose=0)
+gl2plink(x, outfile = outfile, outpath =gone.path, verbose=0, phen.value = -9)
 
 #SET PATH of INPUT PARAMETER FILE in script_GONE.sh
-system(paste0("./script_Gone.sh ",outfile))
+system(paste0("sh script_Gone.sh ",outfile))
 
 
 res<-  read.csv(paste0("Output_Ne_",outfile), sep="\t",skip = 1, header = T)
-setwd(op)
+setwd(old.path)
 
 if (cleanup) unlink(tempd, recursive = T)
 return(res)
