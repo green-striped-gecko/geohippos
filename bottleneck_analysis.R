@@ -189,7 +189,7 @@ lapply(model_list, function(x) {
     theme_minimal() +
     facet_grid(method ~ loci, labeller = "label_both", scales = "free") +
     labs(
-      x = "Loci",
+      x = "Sample Size",
       y = "Root mean square error") +
     scale_colour_viridis(discrete = TRUE, option = "A", end = 0.8)
   return(p)
@@ -219,3 +219,9 @@ ggplot(data = df_b_rmse %>% filter(method != "sim", model == "croc") , aes(x = a
     x = "Loci",
     y = "Root mean square error") +
   scale_colour_viridis(discrete = TRUE, option = "A", end = 0.8)
+
+
+
+
+
+
